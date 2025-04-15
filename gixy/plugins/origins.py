@@ -50,15 +50,23 @@ class origins(Plugin):
         invalid_referers = set()
         regexp = Regexp(directive.value, case_sensitive=(directive.operand in ['~', '!~']))
         for value in regexp.generate('/', anchored=True):
+            # Strip ^ / $ anchors if present
             if value.startswith('^'):
                 value = value[1:]
-            else:
-                value = 'http://evil.com/' + value
-
             if value.endswith('$'):
                 value = value[:-1]
-            elif not value.endswith('/'):
-                value += '.evil.com'
+
+            if directive.variable == '$http_origin':
+                # For Origin, browsers send only scheme + host, no path
+                # So don't prepend 'http://evil.com/'
+                if not re.match(r'^https?://', value):
+                    # Ensure it has a scheme
+                    value = 'https://' + value
+            else:
+                if not re.match(r'^https?://', value):
+                    value = 'http://evil.com/' + value
+                if not value.endswith('/'):
+                    value += '.evil.com'
 
             valid = self.valid_re.match(value)
             if not valid or valid.group('domain') == 'evil.com':
