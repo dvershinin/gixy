@@ -154,22 +154,31 @@ class RawParser(object):
         Convert crossplane blocks to ParseResults format.
         """
         result = ParseResults()
-        
+
+        # Validate input - blocks should be a list
+        if not blocks or not isinstance(blocks, list):
+            return result
+
         # Filter out inline comments (comments that share line numbers with directives)
         line_numbers_with_directives = set()
         for item in blocks:
             if isinstance(item, dict) and item.get('directive') != '#':
                 line_numbers_with_directives.add(item.get('line'))
-        
+
         filtered_blocks = []
         for item in blocks:
-            if isinstance(item, dict) and item.get('directive') == '#':
+            # Skip non-dict items (strings, None, etc.)
+            if not isinstance(item, dict):
+                LOG.debug("Skipping non-dict item in blocks: {0}".format(type(item)))
+                continue
+
+            if item.get('directive') == '#':
                 # Skip comments that are on the same line as directives (inline comments)
                 if item.get('line') not in line_numbers_with_directives:
                     filtered_blocks.append(item)
             else:
                 filtered_blocks.append(item)
-        
+
         for block in filtered_blocks:
             if not isinstance(block, dict):
                 continue

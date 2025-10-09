@@ -66,6 +66,16 @@ class NginxParser(object):
 
     def parse_block(self, parsed_block, parent):
         for parsed in parsed_block:
+            # Skip invalid entries (strings, None, etc.)
+            if not parsed or isinstance(parsed, str):
+                LOG.debug("Skipping invalid parsed entry: {0}".format(repr(parsed)))
+                continue
+
+            # Check if parsed has getName method (ParseResults object)
+            if not hasattr(parsed, 'getName'):
+                LOG.warning("Skipping entry without getName method: {0}".format(type(parsed)))
+                continue
+
             parsed_type = parsed.getName()
             parsed_name = parsed[0]
             parsed_args = parsed[1:]
