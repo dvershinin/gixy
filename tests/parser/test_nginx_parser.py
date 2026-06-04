@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 
 from gixy.directives.block import *
@@ -230,3 +232,93 @@ def assert_config(config, expected):
     child = tree.children[0]
     for ex in expected:
         assert isinstance(child, ex)
+
+
+# --- Regression tests for issue #113: circular include must not recurse ---
+# Without the guard in NginxParser, these configs silently produced the same
+# directive 100+ times (and on Linux/Python 3.11 with a deeper-per-cycle
+# config, crashed with RecursionError). The guard turns each cycle into one
+# WARNING + a finite tree.
+
+
+def _assert_circular_warning(caplog):
+    """Fail if no WARNING about a circular include was logged."""
+    msgs = [
+        r.getMessage()
+        for r in caplog.records
+        if r.levelno >= logging.WARNING and "circular include" in r.getMessage().lower()
+    ]
+    assert msgs, "expected a WARNING about a circular include, got: " + repr(
+        [r.getMessage() for r in caplog.records]
+    )
+
+
+def test_self_include_does_not_recurse(tmp_path, caplog):
+    """A file that literally includes itself must not recurse."""
+    nginx_conf = tmp_path / "nginx.conf"
+    nginx_conf.write_text("user http;\ninclude nginx.conf;\n")
+
+    parser = NginxParser(cwd=str(tmp_path), allow_includes=True)
+    with caplog.at_level(logging.WARNING, logger="gixy.parser.nginx_parser"):
+        tree = parser.parse_file(str(nginx_conf))
+
+    names = [c.name for c in tree.children]
+    assert (
+        names.count("user") == 1
+    ), f"expected one 'user' directive, got {names.count('user')} (tree: {names})"
+    _assert_circular_warning(caplog)
+
+
+def test_glob_self_match_does_not_recurse(tmp_path, caplog):
+    """Realistic case: a file in conf.d/ pulling its own sibling glob.
+
+    Mirrors the shape that admins actually write and which most likely matches
+    the configuration in issue #113.
+    """
+    conf_d = tmp_path / "conf.d"
+    conf_d.mkdir()
+    (tmp_path / "nginx.conf").write_text("user http;\ninclude conf.d/*.conf;\n")
+    (conf_d / "site.conf").write_text(f"server_tokens off;\ninclude {conf_d}/*.conf;\n")
+
+    parser = NginxParser(cwd=str(tmp_path), allow_includes=True)
+    with caplog.at_level(logging.WARNING, logger="gixy.parser.nginx_parser"):
+        tree = parser.parse_file(str(tmp_path / "nginx.conf"))
+
+    names = [c.name for c in tree.children]
+    assert (
+        names.count("server_tokens") == 1
+    ), f"expected one 'server_tokens', got {names.count('server_tokens')} (tree: {names})"
+    assert names.count("user") == 1
+    _assert_circular_warning(caplog)
+
+
+def test_mutual_include_does_not_recurse(tmp_path, caplog):
+    """A → B → A cycle must terminate with each non-include directive once."""
+    (tmp_path / "a.conf").write_text("user http;\ninclude b.conf;\n")
+    (tmp_path / "b.conf").write_text("worker_processes auto;\ninclude a.conf;\n")
+
+    parser = NginxParser(cwd=str(tmp_path), allow_includes=True)
+    with caplog.at_level(logging.WARNING, logger="gixy.parser.nginx_parser"):
+        tree = parser.parse_file(str(tmp_path / "a.conf"))
+
+    names = [c.name for c in tree.children]
+    assert names.count("user") == 1, f"got {names}"
+    assert names.count("worker_processes") == 1, f"got {names}"
+    _assert_circular_warning(caplog)
+
+
+def test_transitive_include_cycle_does_not_recurse(tmp_path, caplog):
+    """A → B → C → A cycle must terminate; catches "only-immediate-include" guards."""
+    (tmp_path / "a.conf").write_text("user http;\ninclude b.conf;\n")
+    (tmp_path / "b.conf").write_text("worker_processes auto;\ninclude c.conf;\n")
+    (tmp_path / "c.conf").write_text("pid /run/nginx.pid;\ninclude a.conf;\n")
+
+    parser = NginxParser(cwd=str(tmp_path), allow_includes=True)
+    with caplog.at_level(logging.WARNING, logger="gixy.parser.nginx_parser"):
+        tree = parser.parse_file(str(tmp_path / "a.conf"))
+
+    names = [c.name for c in tree.children]
+    assert names.count("user") == 1, f"got {names}"
+    assert names.count("worker_processes") == 1, f"got {names}"
+    assert names.count("pid") == 1, f"got {names}"
+    _assert_circular_warning(caplog)

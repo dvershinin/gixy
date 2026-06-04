@@ -22,6 +22,9 @@ class NginxParser:
         self.parser = raw_parser.RawParser()
         self._init_directives()
         self._path_stack = None
+        # Canonical paths currently being parsed; consulted by include
+        # resolvers to break cycles. See issue #113.
+        self._active_includes = set()
 
     def parse_file(self, path, root=None, display_path=None):
         """Parse an nginx configuration file from disk.
@@ -47,7 +50,12 @@ class NginxParser:
             raise InvalidConfiguration(error_msg)
 
         current_path = display_path if display_path else path
-        return self._build_tree_from_parsed(parsed, root, current_path)
+        canonical = os.path.realpath(path)
+        self._active_includes.add(canonical)
+        try:
+            return self._build_tree_from_parsed(parsed, root, current_path)
+        finally:
+            self._active_includes.discard(canonical)
 
     def parse_string(self, content, root=None, path_info=None):
         """Parse nginx configuration provided as a string/bytes.
@@ -128,6 +136,7 @@ class NginxParser:
             block.Root: The root containing parsed directives.
         """
         # Handle nginx -T dump format if detected (multi-file with file delimiters)
+        dump_root = None
         if (
             len(parsed_block)
             and isinstance(parsed_block[0], dict)
@@ -138,10 +147,17 @@ class NginxParser:
             self.is_dump = True
             self.cwd = os.path.dirname(root_filename)
             parsed_block = self.configs[root_filename]
+            # Track the virtual dump root for cycle detection. See issue #113.
+            dump_root = root_filename
+            self._active_includes.add(dump_root)
 
         # Parse into the provided root/parent context and keep attribution
         self._path_stack = current_path
-        self.parse_block(parsed_block, root)
+        try:
+            self.parse_block(parsed_block, root)
+        finally:
+            if dump_root is not None:
+                self._active_includes.discard(dump_root)
         self._path_stack = current_path
         return root
 
@@ -261,6 +277,15 @@ class NginxParser:
             if not os.path.exists(file_path):
                 continue
             exists = True
+            # Skip includes that re-enter a file already on the parse stack
+            # (direct or transitive cycle). See issue #113.
+            canonical = os.path.realpath(file_path)
+            if canonical in self._active_includes:
+                LOG.warning(
+                    "Skipping circular include: %s (already being parsed)",
+                    file_path,
+                )
+                continue
             # parse the include into current context
             self.parse_file(file_path, parent)
 
@@ -278,6 +303,15 @@ class NginxParser:
             if not fnmatch.fnmatch(file_path, path):
                 continue
             found = True
+            # Skip dump entries already on the parse stack. Dump paths are
+            # virtual strings — use them directly as cycle keys (no realpath).
+            # See issue #113.
+            if file_path in self._active_includes:
+                LOG.warning(
+                    "Skipping circular include: %s (already being parsed)",
+                    file_path,
+                )
+                continue
 
             # Flatten includes by parsing into the current parent context.
             # We only switch the path stack for correct file attribution but keep
@@ -288,10 +322,13 @@ class NginxParser:
             # sites/default.conf including conf.d/listen → /etc/nginx/conf.d/listen.
             old_stack = self._path_stack
             self._path_stack = file_path
+            self._active_includes.add(file_path)
 
-            self.parse_block(parsed, parent)
-
-            self._path_stack = old_stack
+            try:
+                self.parse_block(parsed, parent)
+            finally:
+                self._active_includes.discard(file_path)
+                self._path_stack = old_stack
 
         if not found:
             # Align behavior with nginx: unmatched glob patterns are not warnings
