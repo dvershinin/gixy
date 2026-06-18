@@ -587,6 +587,26 @@ def check_proxy_ssl_upstream(root):
             yield directive, directive
 
 
+def check_grpc_or_http2_upstream(root):
+    """Yield directives that activate HTTP/2-based upstream proxying.
+
+    Matches every ``grpc_pass`` directive (gRPC always travels over
+    HTTP/2) and ``proxy_http_version 2.0`` settings. Used for
+    CVE-2026-42055.
+
+    Args:
+        root: Root Block of the parsed config.
+
+    Yields:
+        Tuples of ``(directive, directive)``.
+    """
+    for directive in root.find_recursive("grpc_pass"):
+        yield directive, directive
+    for directive in root.find_recursive("proxy_http_version"):
+        if directive.args and directive.args[0] == "2.0":
+            yield directive, directive
+
+
 def check_proxy_with_http2(root):
     """Yield ``proxy_pass`` directives if HTTP/2 is also enabled.
 
@@ -630,6 +650,39 @@ def _advisory(cve_id):
 
 
 CVES = (
+    {
+        "id": "CVE-2026-42530",
+        "nickname": "",
+        "summary": "Use-after-free in ngx_http_v3_module.",
+        "severity": gixy.severity.HIGH,
+        "advisory": _advisory("CVE-2026-42530"),
+        "vulnerable_oss": (((1, 31, 0), (1, 31, 1)),),
+        "fixed_oss": ("1.31.2",),
+        "fixed_plus": (),
+        "config_check": check_http3_enabled,
+    },
+    {
+        "id": "CVE-2026-42055",
+        "nickname": "",
+        "summary": "Buffer overflow in ngx_http_proxy_v2_module and ngx_http_grpc_module.",
+        "severity": gixy.severity.MEDIUM,
+        "advisory": _advisory("CVE-2026-42055"),
+        "vulnerable_oss": (((1, 13, 10), (1, 31, 1)),),
+        "fixed_oss": ("1.30.3", "1.31.2"),
+        "fixed_plus": (),
+        "config_check": check_grpc_or_http2_upstream,
+    },
+    {
+        "id": "CVE-2026-48142",
+        "nickname": "",
+        "summary": "Buffer overread in ngx_http_charset_module.",
+        "severity": gixy.severity.LOW,
+        "advisory": _advisory("CVE-2026-48142"),
+        "vulnerable_oss": (((0, 3, 50), (1, 31, 1)),),
+        "fixed_oss": ("1.30.3", "1.31.2"),
+        "fixed_plus": (),
+        "config_check": check_charset,
+    },
     {
         "id": "CVE-2026-9256",
         "nickname": "",

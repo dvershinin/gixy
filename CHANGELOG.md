@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.49] - 2026-06-18
+
+### Added
+- **`nginx_cves`**: New entry **CVE-2026-42530** — use-after-free in `ngx_http_v3_module`. Affects nginx mainline `1.31.0`..`1.31.1` only when HTTP/3 / QUIC is enabled (`listen … quic` or `http3 on`); stable 1.30.x was never exposed. Mitigation: upgrade to **1.31.2**. Advisory: <https://nvd.nist.gov/vuln/detail/CVE-2026-42530>, F5: <https://my.f5.com/manage/s/article/K000161616>.
+- **`nginx_cves`**: New entry **CVE-2026-42055** — buffer overflow in `ngx_http_proxy_v2_module` / `ngx_http_grpc_module`. Affects nginx OSS `1.13.10`..`1.31.1` when `grpc_pass` is configured or upstream HTTP/2 proxying is enabled (`proxy_http_version 2.0`). Mitigation: upgrade to **1.30.3** (stable) or **1.31.2** (mainline). Advisory: <https://nvd.nist.gov/vuln/detail/CVE-2026-42055>, F5: <https://my.f5.com/manage/s/article/K000161584>.
+- **`nginx_cves`**: New entry **CVE-2026-48142** — buffer overread in `ngx_http_charset_module`. Affects nginx OSS `0.3.50`..`1.31.1` when a non-`off` `charset` directive is configured. Mitigation: upgrade to **1.30.3** (stable) or **1.31.2** (mainline). Advisory: <https://nvd.nist.gov/vuln/detail/CVE-2026-48142>, F5: <https://my.f5.com/manage/s/article/K000161585>.
+
 ## [0.2.48] - 2026-06-04
 
 ### Fixed

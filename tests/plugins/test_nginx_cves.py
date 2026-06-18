@@ -488,3 +488,133 @@ def test_anchor_picks_first_server_for_version_only():
     """Pure version-only CVEs must produce a visible issue location."""
     issues = _run_plugin("0.7.50", _PLAIN)
     assert issues, "ancient version should fire at least one version-only CVE"
+
+
+# --------------------------------------------------------------------------
+# CVEs landed via the 2026-06-17 nginx 1.30.3 / 1.31.2 releases.
+# --------------------------------------------------------------------------
+
+_HTTP3_ON = """events {}
+http {
+    http3 on;
+    server { listen 443 quic reuseport; }
+}
+"""
+
+_GRPC = """events {}
+http {
+    server {
+        listen 80;
+        location /grpc { grpc_pass grpc://upstream:50051; }
+    }
+}
+"""
+
+_PROXY_HTTP2_UPSTREAM = """events {}
+http {
+    server {
+        listen 80;
+        location / {
+            proxy_http_version 2.0;
+            proxy_pass http://upstream;
+        }
+    }
+}
+"""
+
+_CHARSET_ON = """events {}
+http {
+    server { listen 80; charset utf-8; }
+}
+"""
+
+_CHARSET_OFF = """events {}
+http {
+    server { listen 80; charset off; }
+}
+"""
+
+
+def test_cve_2026_42530_fires_with_http3_on_mainline():
+    assert "CVE-2026-42530" in _cves_fired("1.31.1", _HTTP3_ON)
+
+
+def test_cve_2026_42530_silent_without_http3():
+    assert "CVE-2026-42530" not in _cves_fired("1.31.1", _PLAIN)
+
+
+def test_cve_2026_42530_silent_on_mainline_fix():
+    assert "CVE-2026-42530" not in _cves_fired("1.31.2", _HTTP3_ON)
+
+
+def test_cve_2026_42530_silent_on_stable_branches():
+    """Stable 1.30.x was never exposed to CVE-2026-42530."""
+    for version in ("1.30.0", "1.30.3"):
+        assert "CVE-2026-42530" not in _cves_fired(version, _HTTP3_ON), version
+
+
+def test_cve_2026_42055_fires_with_grpc_pass():
+    assert "CVE-2026-42055" in _cves_fired("1.30.0", _GRPC)
+
+
+def test_cve_2026_42055_fires_with_proxy_http_version_2_0():
+    assert "CVE-2026-42055" in _cves_fired("1.30.0", _PROXY_HTTP2_UPSTREAM)
+
+
+def test_cve_2026_42055_silent_without_grpc_or_http2_upstream():
+    assert "CVE-2026-42055" not in _cves_fired("1.31.1", _PLAIN)
+
+
+def test_cve_2026_42055_silent_on_stable_fix():
+    assert "CVE-2026-42055" not in _cves_fired("1.30.3", _GRPC)
+
+
+def test_cve_2026_42055_silent_on_mainline_fix():
+    assert "CVE-2026-42055" not in _cves_fired("1.31.2", _GRPC)
+
+
+def test_cve_2026_42055_silent_before_vulnerable_range():
+    """Pre-1.13.10 (no grpc module yet) must not be flagged."""
+    assert "CVE-2026-42055" not in _cves_fired("1.13.9", _PLAIN)
+
+
+def test_cve_2026_48142_fires_with_charset_on():
+    assert "CVE-2026-48142" in _cves_fired("1.31.0", _CHARSET_ON)
+
+
+def test_cve_2026_48142_silent_with_charset_off():
+    assert "CVE-2026-48142" not in _cves_fired("1.31.0", _CHARSET_OFF)
+
+
+def test_cve_2026_48142_silent_without_charset_directive():
+    assert "CVE-2026-48142" not in _cves_fired("1.31.0", _PLAIN)
+
+
+def test_cve_2026_48142_silent_on_stable_fix():
+    assert "CVE-2026-48142" not in _cves_fired("1.30.3", _CHARSET_ON)
+
+
+def test_cve_2026_48142_silent_on_mainline_fix():
+    assert "CVE-2026-48142" not in _cves_fired("1.31.2", _CHARSET_ON)
+
+
+def test_2026_06_release_cves_silent_on_full_patched_versions():
+    """Spot-check: a config exercising every trigger at fixed versions
+    must not surface any of the three 2026-06 CVEs."""
+    multi = """events {}
+http {
+    http3 on;
+    server {
+        listen 443 quic reuseport;
+        charset utf-8;
+        location /grpc { grpc_pass grpc://upstream:50051; }
+        location /h2 {
+            proxy_http_version 2.0;
+            proxy_pass http://upstream;
+        }
+    }
+}
+"""
+    new_cves = {"CVE-2026-42055", "CVE-2026-48142", "CVE-2026-42530"}
+    assert new_cves.isdisjoint(_cves_fired("1.30.3", multi))
+    assert new_cves.isdisjoint(_cves_fired("1.31.2", multi))
