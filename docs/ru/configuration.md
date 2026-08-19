@@ -41,7 +41,7 @@ domains = example.com, example.org
 https-only = true
 
 [regex-redos]
-url = ^/api/.*
+deep = true
 ```
 
 Того же эффекта можно добиться без секций, объединив имя плагина и опцию через дефис, например `origins-domains = ...`, но секции удобнее.
@@ -52,6 +52,7 @@ url = ^/api/.*
 - Запись отчёта в файл: `output = /path/to/report.txt` (то же, что `-o/--output`)
 - Отключить обработку include: `disable-includes = true` (то же, что `--disable-includes`)
 - Каталоги кастомных переменных: `vars-dirs = [/etc/gixy/vars, ~/.config/gixy/vars]` (см. «Пользовательские переменные (drop-ins)»)
+- Глубокий анализ: `deep = true` (то же, что `--deep`; включает анализ ReDoS на основе автоматов)
 
 ### Полный пример
 
@@ -76,5 +77,5 @@ domains = example.com, example.org
 https-only = true
 
 [regex-redos]
-url = ^/api/.*
+deep = true
 ```

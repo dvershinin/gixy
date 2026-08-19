@@ -38,6 +38,12 @@ def test_cli_vars_dirs_option_present():
     assert getattr(args, "vars_dirs", None) == "/etc/gixy/vars"
 
 
+def test_cli_deep_option_present():
+    parser = _get_cli_parser()
+    args = parser.parse_args(["--deep", "-"])
+    assert args.deep is True
+
+
 def test_cli_help_contains_cta(monkeypatch, capsys):
     monkeypatch.setattr(sys, "argv", ["gixy", "--help"])
     with pytest.raises(SystemExit):
@@ -84,6 +90,7 @@ def test_cli_main_runs_with_plugin_options(monkeypatch):
         "argv",
         [
             "gixy",
+            "--deep",
             "--origins-domains",
             "example.com,foo.bar",
             "tests/integration/wordpress_production.conf",
@@ -102,6 +109,7 @@ def test_cli_main_runs_with_plugin_options(monkeypatch):
     origins_opts = config.get_for("origins")
     # Expect that domains has been split into a list
     assert origins_opts.get("domains") == ["example.com", "foo.bar"]
+    assert config.get_for("regex_redos").get("deep") is True
 
 
 def test_cli_module_invocation_via_python_m():

@@ -41,7 +41,7 @@ domains = example.com, example.org
 https-only = true
 
 [regex-redos]
-url = ^/api/.*
+deep = true
 ```
 
 不使用段也可以实现相同效果：把插件名与选项以连字符拼接，例如 `origins-domains = ...`，但分段写法更易组织。
@@ -52,6 +52,7 @@ url = ^/api/.*
 - 写报告到文件：`output = /path/to/report.txt`（等同 `-o/--output`）
 - 禁用 include 处理：`disable-includes = true`（等同 `--disable-includes`）
 - 自定义变量目录：`vars-dirs = [/etc/gixy/vars, ~/.config/gixy/vars]`（详见“自定义变量扩展”）
+- 深度分析：`deep = true`（等同 `--deep`；启用基于自动机的 ReDoS 分析）
 
 ### 完整示例
 
@@ -76,5 +77,5 @@ domains = example.com, example.org
 https-only = true
 
 [regex-redos]
-url = ^/api/.*
+deep = true
 ```

@@ -18,6 +18,7 @@ Example attack:
 
 import re
 
+from gixy.core.regex_automaton import AutomatonComplexity, AutomatonRedosAnalyzer
 from gixy.core.sre_parse import sre_parse
 from gixy.core.sre_parse.sre_parse import (
     ANY,
@@ -99,9 +100,11 @@ class RedosAnalyzer:
        - .+.+end - similar issue
     """
 
-    def __init__(self, pattern, case_insensitive=False):
+    def __init__(self, pattern, case_insensitive=False, deep=False):
         self.pattern = pattern
         self.flags = re.IGNORECASE if case_insensitive else 0
+        self.case_insensitive = case_insensitive
+        self.deep = deep
         self.vulnerabilities = []
 
     def analyze(self):
@@ -110,6 +113,29 @@ class RedosAnalyzer:
         Returns empty list if pattern is safe.
         """
         self.vulnerabilities = []
+
+        if self.deep:
+            complexity = AutomatonRedosAnalyzer(
+                self.pattern, case_insensitive=self.case_insensitive
+            ).analyze()
+            if complexity.kind == AutomatonComplexity.EXPONENTIAL:
+                return [
+                    RedosVulnerability(
+                        RedosVulnerability.EXPONENTIAL,
+                        "Ambiguous regex paths cause exponential backtracking",
+                        attack_hint="repeat the ambiguous matching input + a rejecting suffix",
+                    )
+                ]
+            if complexity.kind == AutomatonComplexity.POLYNOMIAL:
+                return [
+                    RedosVulnerability(
+                        RedosVulnerability.POLYNOMIAL,
+                        f"Ambiguous regex paths cause polynomial O(n^{complexity.degree}) backtracking",
+                        attack_hint="repeat input shared by the ambiguous quantified paths",
+                    )
+                ]
+            if complexity.kind != AutomatonComplexity.UNKNOWN:
+                return []
 
         try:
             parsed = sre_parse.parse(self.pattern, self.flags)
@@ -661,6 +687,17 @@ class regex_redos(Plugin):
         "can tie up an nginx worker for minutes or longer."
     )
     directives = ["location", "if", "rewrite", "server_name", "map"]
+    options = {"deep": False}
+    options_help = {
+        "deep": (
+            "Use recheck-inspired automata analysis to find exponential and "
+            "higher-degree polynomial ambiguity without executing the regex."
+        )
+    }
+
+    def __init__(self, config):
+        super(regex_redos, self).__init__(config)
+        self.deep = bool(self.config.get("deep"))
 
     def audit(self, directive):
         """Extract regex patterns from directive and check for ReDoS vulnerabilities."""
@@ -673,7 +710,7 @@ class regex_redos(Plugin):
 
             case_insensitive = self._is_case_insensitive(directive, context)
 
-            analyzer = RedosAnalyzer(pattern, case_insensitive)
+            analyzer = RedosAnalyzer(pattern, case_insensitive, deep=self.deep)
             vulnerabilities = analyzer.analyze()
 
             if vulnerabilities:

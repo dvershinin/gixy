@@ -254,6 +254,17 @@ def _get_cli_parser():
     )
 
     parser.add_argument(
+        "--deep",
+        dest="deep",
+        action="store_true",
+        default=False,
+        help=(
+            "Run slower, more precise structural checks. Currently enables "
+            "automata-based ReDoS complexity analysis."
+        ),
+    )
+
+    parser.add_argument(
         "--checks",
         "--tests",
         dest="checks",
@@ -429,6 +440,11 @@ def main():
     # --nginx-cves-version (the dest argparse uses for the per-plugin form).
     if args.nginx_version:
         setattr(args, "nginx_cves:version", args.nginx_version)
+
+    # Top-level --deep enables the current deep-capable check while preserving
+    # its auto-generated --regex-redos-deep per-plugin configuration option.
+    if args.deep:
+        setattr(args, "regex_redos:deep", True)
 
     for plugin_cls in PluginsManager().plugins_classes:
         name = plugin_cls.__name__

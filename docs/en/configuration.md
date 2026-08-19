@@ -43,7 +43,7 @@ domains = example.com, example.org
 https-only = true
 
 [regex-redos]
-url = ^/api/.*
+deep = true
 ```
 
 The same effect can be achieved without sections by combining the check name and option with a dash, e.g. `origins-domains = ...`, but sections are easier to organize.
@@ -54,6 +54,7 @@ The same effect can be achieved without sections by combining the check name and
 - **Write report to file**: `output = /path/to/report.txt` (same as `-o/--output`)
 - **Disable include processing**: `disable-includes = true` (same as `--disable-includes`)
 - **Custom variables directories**: `vars-dirs = [/etc/gixy/vars, ~/.config/gixy/vars]` (see "Custom variables drop-ins")
+- **Deep analysis**: `deep = true` (same as `--deep`; currently enables automata-based ReDoS analysis)
 
 ## Full Example
 
@@ -78,5 +79,5 @@ domains = example.com, example.org
 https-only = true
 
 [regex-redos]
-url = ^/api/.*
+deep = true
 ```

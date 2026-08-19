@@ -88,10 +88,20 @@ location ~ ^/api/v[0-9]+/users$ {
 
 ## How gixy detects ReDoS
 
-Gixy uses Python's built-in `sre_parse` module to analyze the regex structure without any external dependencies. It detects:
+Gixy analyzes the parsed regex structure locally, without sending patterns to an external service and without executing attacker-controlled regexes. The default fast analysis detects:
 
 1. **Nested quantifiers** - any pattern where a variable-length quantifier contains another variable-length quantifier
 2. **Overlapping alternatives** - alternation groups inside quantifiers where branches can match the same input
+
+For a more complete analysis, run:
+
+```bash
+gixy --deep /etc/nginx/nginx.conf
+```
+
+Deep mode uses a recheck-inspired position automaton. It looks for EDA structures (two distinct cycles that consume the same input) and IDA chains (multiple quantified regions that can consume the same input), then classifies findings as exponential or polynomial with a degree. This catches non-local cases such as `.*a.*a` that simple nested-quantifier checks miss, and clears local false positives such as `(a|ab)+` when the automaton proves the paths unambiguous.
+
+Lookarounds and other constructs that cannot be represented safely fall back to the default structural checks. Both modes are static: Gixy never calls `re.match`, `re.search`, or another backtracking matcher with the nginx pattern.
 
 ## Recommendations
 
@@ -99,7 +109,7 @@ Gixy uses Python's built-in `sre_parse` module to analyze the regex structure wi
 2. **Use non-overlapping alternatives** - ensure alternatives don't share common prefixes
 3. **Use bounded quantifiers** - `{1,100}` instead of `+` or `*` where possible
 4. **Prefer prefix/exact locations** - use `location /path` or `location = /path` instead of regex when possible
-5. **Test your regexes** - use online ReDoS checkers like [recheck](https://makenowjust-labs.github.io/recheck/) before deploying
+5. **Run deep analysis before deploying** - use `gixy --deep nginx.conf` to check the complete configuration locally
 
 ## References
 

@@ -1,6 +1,6 @@
 """Unit tests for the ReDoS analyzer."""
 
-from gixy.plugins.regex_redos import RedosAnalyzer
+from gixy.plugins.regex_redos import RedosAnalyzer, RedosVulnerability
 
 
 class TestNestedQuantifiers:
@@ -331,3 +331,29 @@ class TestVulnerabilityDetails:
         vulns = analyzer.analyze()
         assert len(vulns) > 0
         assert vulns[0].attack_hint is not None
+
+
+class TestDeepAnalysis:
+    """Test the opt-in recheck-inspired automata mode."""
+
+    def test_deep_clears_prefix_alternative_false_positive(self):
+        """(a|ab)+ has no two cycles consuming the same string."""
+        analyzer = RedosAnalyzer("(a|ab)+", deep=True)
+        assert analyzer.analyze() == []
+
+    def test_deep_finds_separated_polynomial_ambiguity(self):
+        """Separated stars can form an IDA chain missed by local heuristics."""
+        analyzer = RedosAnalyzer(".*a.*a", deep=True)
+        vulnerabilities = analyzer.analyze()
+        assert len(vulnerabilities) == 1
+        assert vulnerabilities[0].type == RedosVulnerability.POLYNOMIAL
+        assert "O(n^2)" in str(vulnerabilities[0])
+
+    def test_deep_finds_exponential_ambiguity(self):
+        analyzer = RedosAnalyzer("(a|aa)+", deep=True)
+        vulnerabilities = analyzer.analyze()
+        assert len(vulnerabilities) == 1
+        assert vulnerabilities[0].type == RedosVulnerability.EXPONENTIAL
+
+    def test_deep_invalid_pattern_does_not_escape(self):
+        assert RedosAnalyzer("(unclosed", deep=True).analyze() == []

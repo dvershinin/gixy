@@ -192,6 +192,8 @@ Use `--no-backup` to skip creating backup files.
 
 Or something else, you can find all other `gixy` arguments with the help command: `gixy --help`
 
+For a more precise ReDoS pass, use `gixy --deep nginx.conf`. Deep mode uses local automata analysis to detect exponential and higher-degree polynomial ambiguity; it never uploads or executes nginx regexes.
+
 ### Plugin options
 
 Some plugins expose options which you can set via CLI flags or config file. CLI flags follow the pattern `--<PluginName>-<option>` with dashes, while config file uses `[PluginName]` sections with dashed keys.
@@ -203,6 +205,9 @@ Some plugins expose options which you can set via CLI flags or config file. CLI 
 
 - `add_header_redefinition`:
   - `--add-header-redefinition-headers headers`: Comma-separated allowlist of header names (case-insensitive). When set, only dropped headers from this list will be reported; when unset, all dropped headers are reported. Example: `--add-header-redefinition-headers x-frame-options,content-security-policy`. Default: unset (report all).
+
+- `regex_redos`:
+  - `--regex-redos-deep true|false`: Enable the same automata analysis as top-level `--deep`. Default: `false`.
 
 Examples (config file):
 ```
