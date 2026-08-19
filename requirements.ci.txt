@@ -1,0 +1,17 @@
+# Reproducible direct dependencies for the Python 3.6-3.13 CI matrix.
+# Transitive dependencies are constrained by their parents and must have wheels.
+ngxparse==0.5.16
+cached-property==1.5.2; python_version < "3.8"
+cached-property==2.0.1; python_version >= "3.8"
+argparse==1.4.0
+Jinja2==3.0.3; python_version == "3.6"
+Jinja2==3.1.6; python_version >= "3.7"
+ConfigArgParse==1.7.5
+pytest==7.0.1; python_version == "3.6"
+pytest==7.4.4; python_version == "3.7"
+pytest==8.3.5; python_version >= "3.8"
+pytest-xdist==3.0.2; python_version == "3.6"
+pytest-xdist==3.5.0; python_version == "3.7"
+pytest-xdist==3.6.1; python_version >= "3.8"
+flake8==5.0.4; python_version < "3.8"
+flake8==7.1.2; python_version >= "3.8"

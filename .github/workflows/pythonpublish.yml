@@ -8,15 +8,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip  # NOSONAR - trusted packaging bootstrap
-        pip install setuptools wheel twine  # NOSONAR - trusted release tooling
+        python -m pip install --only-binary=:all: pip==25.2 setuptools==75.8.0 wheel==0.45.1 twine==6.1.0
     - name: Build and publish
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
