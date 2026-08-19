@@ -44,6 +44,7 @@ jobs:
             ngxparse==0.5.16 \
             Jinja2==3.1.6 \
             ConfigArgParse==1.7.5 \
+            redoctor==0.1.5 \
             setuptools==75.8.0 \
             pyinstaller==6.15.0
           python setup.py install

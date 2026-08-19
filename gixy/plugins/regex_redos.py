@@ -18,7 +18,10 @@ Example attack:
 
 import re
 
-from gixy.core.regex_automaton import AutomatonComplexity, AutomatonRedosAnalyzer
+from redoctor import Config as RedoctorConfig
+from redoctor import Flags as RedoctorFlags
+from redoctor import check as redoctor_check
+
 from gixy.core.sre_parse import sre_parse
 from gixy.core.sre_parse.sre_parse import (
     ANY,
@@ -115,26 +118,28 @@ class RedosAnalyzer:
         self.vulnerabilities = []
 
         if self.deep:
-            complexity = AutomatonRedosAnalyzer(
-                self.pattern, case_insensitive=self.case_insensitive
-            ).analyze()
-            if complexity.kind == AutomatonComplexity.EXPONENTIAL:
+            # ReDoctor's quick profile combines automata and bounded custom-VM
+            # fuzzing, but deliberately skips recall through Python's
+            # backtracking regex engine. NGINX patterns can be untrusted input.
+            result = redoctor_check(
+                self.pattern,
+                flags=RedoctorFlags(ignore_case=self.case_insensitive),
+                config=RedoctorConfig.quick(),
+            )
+            if result.is_vulnerable:
+                complexity = result.complexity
+                vuln_type = RedosVulnerability.POLYNOMIAL
+                if complexity.is_exponential:
+                    vuln_type = RedosVulnerability.EXPONENTIAL
                 return [
                     RedosVulnerability(
-                        RedosVulnerability.EXPONENTIAL,
-                        "Ambiguous regex paths cause exponential backtracking",
-                        attack_hint="repeat the ambiguous matching input + a rejecting suffix",
+                        vuln_type,
+                        f"ReDoctor {result.checker} analysis found "
+                        f"{complexity.summary} backtracking",
+                        attack_hint=str(result.attack_pattern),
                     )
                 ]
-            if complexity.kind == AutomatonComplexity.POLYNOMIAL:
-                return [
-                    RedosVulnerability(
-                        RedosVulnerability.POLYNOMIAL,
-                        f"Ambiguous regex paths cause polynomial O(n^{complexity.degree}) backtracking",
-                        attack_hint="repeat input shared by the ambiguous quantified paths",
-                    )
-                ]
-            if complexity.kind != AutomatonComplexity.UNKNOWN:
+            if result.is_safe:
                 return []
 
         try:
@@ -690,8 +695,8 @@ class regex_redos(Plugin):
     options = {"deep": False}
     options_help = {
         "deep": (
-            "Use recheck-inspired automata analysis to find exponential and "
-            "higher-degree polynomial ambiguity without executing the regex."
+            "Use ReDoctor automata and bounded custom-VM fuzzing to find "
+            "exponential and higher-degree polynomial ambiguity."
         )
     }
 

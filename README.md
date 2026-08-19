@@ -192,7 +192,7 @@ Use `--no-backup` to skip creating backup files.
 
 Or something else, you can find all other `gixy` arguments with the help command: `gixy --help`
 
-For a more precise ReDoS pass, use `gixy --deep nginx.conf`. Deep mode uses local automata analysis to detect exponential and higher-degree polynomial ambiguity; it never uploads or executes nginx regexes.
+For a more precise ReDoS pass, use `gixy --deep nginx.conf`. Deep mode delegates to [ReDoctor](https://redoctor.getpagespeed.com/), combining automata analysis with bounded fuzzing in a safe custom regex VM. Analysis stays local, and Gixy disables ReDoctor's runtime recall step so nginx regexes are never executed by Python's backtracking engine.
 
 ### Plugin options
 
@@ -207,7 +207,7 @@ Some plugins expose options which you can set via CLI flags or config file. CLI 
   - `--add-header-redefinition-headers headers`: Comma-separated allowlist of header names (case-insensitive). When set, only dropped headers from this list will be reported; when unset, all dropped headers are reported. Example: `--add-header-redefinition-headers x-frame-options,content-security-policy`. Default: unset (report all).
 
 - `regex_redos`:
-  - `--regex-redos-deep true|false`: Enable the same automata analysis as top-level `--deep`. Default: `false`.
+  - `--regex-redos-deep true|false`: Enable the same ReDoctor analysis as top-level `--deep`. Default: `false`.
 
 Examples (config file):
 ```

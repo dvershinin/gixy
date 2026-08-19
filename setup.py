@@ -15,6 +15,7 @@ install_requires = [
     'argparse>=1.4.0;python_version<"3.2"',
     "Jinja2>=2.8",
     "ConfigArgParse>=0.11.0",
+    "redoctor>=0.1.5",
 ]
 
 tests_requires = [

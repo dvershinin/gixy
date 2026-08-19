@@ -1,5 +1,7 @@
 """Unit tests for the ReDoS analyzer."""
 
+from redoctor import Diagnostics
+
 from gixy.plugins.regex_redos import RedosAnalyzer, RedosVulnerability
 
 
@@ -334,7 +336,7 @@ class TestVulnerabilityDetails:
 
 
 class TestDeepAnalysis:
-    """Test the opt-in recheck-inspired automata mode."""
+    """Test the opt-in ReDoctor-backed analysis mode."""
 
     def test_deep_clears_prefix_alternative_false_positive(self):
         """(a|ab)+ has no two cycles consuming the same string."""
@@ -347,7 +349,9 @@ class TestDeepAnalysis:
         vulnerabilities = analyzer.analyze()
         assert len(vulnerabilities) == 1
         assert vulnerabilities[0].type == RedosVulnerability.POLYNOMIAL
-        assert "O(n^2)" in str(vulnerabilities[0])
+        assert "ReDoctor automaton" in str(vulnerabilities[0])
+        assert "O(n^4)" in str(vulnerabilities[0])
+        assert "\\x00" in str(vulnerabilities[0])
 
     def test_deep_finds_exponential_ambiguity(self):
         analyzer = RedosAnalyzer("(a|aa)+", deep=True)
@@ -357,3 +361,25 @@ class TestDeepAnalysis:
 
     def test_deep_invalid_pattern_does_not_escape(self):
         assert RedosAnalyzer("(unclosed", deep=True).analyze() == []
+
+    def test_deep_uses_nginx_flags_and_safe_quick_profile(self, monkeypatch):
+        captured = {}
+
+        def fake_check(pattern, flags, config):
+            captured.update(pattern=pattern, flags=flags, config=config)
+            return Diagnostics.safe(pattern, checker="automaton")
+
+        monkeypatch.setattr("gixy.plugins.regex_redos.redoctor_check", fake_check)
+        assert RedosAnalyzer("abc", case_insensitive=True, deep=True).analyze() == []
+        assert captured["pattern"] == "abc"
+        assert captured["flags"].ignore_case is True
+        assert captured["config"].skip_recall is True
+
+    def test_deep_unknown_falls_back_to_nginx_heuristics(self, monkeypatch):
+        monkeypatch.setattr(
+            "gixy.plugins.regex_redos.redoctor_check",
+            lambda pattern, flags, config: Diagnostics.unknown(pattern),
+        )
+        vulnerabilities = RedosAnalyzer("(a+)+", deep=True).analyze()
+        assert len(vulnerabilities) == 1
+        assert "Nested quantifier" in str(vulnerabilities[0])

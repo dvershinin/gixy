@@ -16,7 +16,7 @@ WORKDIR /src
 COPY --from=builder /src/dist/gixy_ng-*.whl /tmp/
 
 RUN python -m pip install --only-binary=:all: \
-        ngxparse==0.5.16 Jinja2==3.1.6 ConfigArgParse==1.7.5 \
+        ngxparse==0.5.16 Jinja2==3.1.6 ConfigArgParse==1.7.5 redoctor==0.1.5 \
     && python -m pip install --only-binary=:all: --no-deps /tmp/gixy_ng-*.whl \
     && rm /tmp/gixy_ng-*.whl
 

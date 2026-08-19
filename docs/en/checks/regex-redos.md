@@ -99,9 +99,9 @@ For a more complete analysis, run:
 gixy --deep /etc/nginx/nginx.conf
 ```
 
-Deep mode uses a recheck-inspired position automaton. It looks for EDA structures (two distinct cycles that consume the same input) and IDA chains (multiple quantified regions that can consume the same input), then classifies findings as exponential or polynomial with a degree. This catches non-local cases such as `.*a.*a` that simple nested-quantifier checks miss, and clears local false positives such as `(a|ab)+` when the automaton proves the paths unambiguous.
+Deep mode delegates the regex analysis to [ReDoctor](https://redoctor.getpagespeed.com/), a Python implementation of recheck's hybrid approach. ReDoctor combines automata analysis for exponential and polynomial ambiguity with bounded fuzzing in its safe custom regex VM. This catches non-local cases such as `.*a.*a` that simple nested-quantifier checks miss, and clears local false positives such as `(a|ab)+` when the automaton proves the paths unambiguous.
 
-Lookarounds and other constructs that cannot be represented safely fall back to the default structural checks. Both modes are static: Gixy never calls `re.match`, `re.search`, or another backtracking matcher with the nginx pattern.
+Gixy keeps its nginx-specific pattern extraction and reporting. ReDoctor results that are unknown or invalid fall back to Gixy's default structural checks. Analysis stays local, and Gixy uses ReDoctor's quick profile with runtime recall disabled, so nginx patterns are never executed by Python's backtracking regex engine.
 
 ## Recommendations
 
@@ -114,6 +114,7 @@ Lookarounds and other constructs that cannot be represented safely fall back to 
 ## References
 
 - [OWASP: Regular expression Denial of Service](https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS)
+- [ReDoctor documentation](https://redoctor.getpagespeed.com/)
 - [Wikipedia: ReDoS](https://en.wikipedia.org/wiki/ReDoS)
 - [Cloudflare: Details of the Cloudflare outage on July 2, 2019](https://blog.cloudflare.com/details-of-the-cloudflare-outage-on-july-2-2019/) - a famous ReDoS incident
 

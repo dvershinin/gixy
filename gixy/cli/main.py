@@ -260,7 +260,7 @@ def _get_cli_parser():
         default=False,
         help=(
             "Run slower, more precise structural checks. Currently enables "
-            "automata-based ReDoS complexity analysis."
+            "ReDoctor hybrid ReDoS analysis."
         ),
     )
 
