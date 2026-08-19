@@ -44,6 +44,21 @@ def test_cli_deep_option_present():
     assert args.deep is True
 
 
+@pytest.mark.parametrize(
+    "deep_args",
+    (["--deep", "-"], ["--regex-redos-deep", "true", "-"]),
+)
+def test_cli_deep_requires_optional_dependency(monkeypatch, capsys, deep_args):
+    monkeypatch.setattr("gixy.cli.main.REDOCTOR_AVAILABLE", False)
+    monkeypatch.setattr(sys, "argv", ["gixy"] + deep_args)
+
+    with pytest.raises(SystemExit) as error:
+        main()
+
+    assert error.value.code == 2
+    assert "gixy-ng[deep]" in capsys.readouterr().err
+
+
 def test_cli_help_contains_cta(monkeypatch, capsys):
     monkeypatch.setattr(sys, "argv", ["gixy", "--help"])
     with pytest.raises(SystemExit):

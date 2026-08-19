@@ -18,9 +18,17 @@ Example attack:
 
 import re
 
-from redoctor import Config as RedoctorConfig
-from redoctor import Flags as RedoctorFlags
-from redoctor import check as redoctor_check
+try:
+    from redoctor import Config as RedoctorConfig
+    from redoctor import Flags as RedoctorFlags
+    from redoctor import check as redoctor_check
+
+    REDOCTOR_AVAILABLE = True
+except ImportError:  # pragma: no cover - exercised without the deep extra
+    RedoctorConfig = None
+    RedoctorFlags = None
+    redoctor_check = None
+    REDOCTOR_AVAILABLE = False
 
 from gixy.core.sre_parse import sre_parse
 from gixy.core.sre_parse.sre_parse import (
@@ -117,7 +125,7 @@ class RedosAnalyzer:
         """
         self.vulnerabilities = []
 
-        if self.deep:
+        if self.deep and REDOCTOR_AVAILABLE:
             # ReDoctor's quick profile combines automata and bounded custom-VM
             # fuzzing, but deliberately skips recall through Python's
             # backtracking regex engine. NGINX patterns can be untrusted input.
@@ -696,7 +704,8 @@ class regex_redos(Plugin):
     options_help = {
         "deep": (
             "Use ReDoctor automata and bounded custom-VM fuzzing to find "
-            "exponential and higher-degree polynomial ambiguity."
+            "exponential and higher-degree polynomial ambiguity. Requires "
+            "the gixy-ng[deep] extra."
         )
     }
 

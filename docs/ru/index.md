@@ -61,12 +61,21 @@ yum -y install https://extras.getpagespeed.com/release-latest.rpm
 yum -y install gixy
 ```
 
+RPM включает быстрый встроенный анализ ReDoS. Режим `--deep` на основе
+ReDoctor является необязательным и не входит в зависимости RPM.
+
 ### Другие системы
 
 Gixy публикуется на [PyPI](https://pypi.python.org/pypi/gixy-ng). Рекомендуемый способ установки — через pip:
 
 ```bash
 pip install gixy-ng
+```
+
+Для необязательного глубокого анализа ReDoS через ReDoctor установите:
+
+```bash
+pip install 'gixy-ng[deep]'
 ```
 
 Запустите Gixy и посмотрите результат:

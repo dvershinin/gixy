@@ -5,3 +5,4 @@ tox>=2.7.0
 pytest-xdist
 setuptools
 twine
+redoctor>=0.1.5

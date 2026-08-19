@@ -383,3 +383,9 @@ class TestDeepAnalysis:
         vulnerabilities = RedosAnalyzer("(a+)+", deep=True).analyze()
         assert len(vulnerabilities) == 1
         assert "Nested quantifier" in str(vulnerabilities[0])
+
+    def test_missing_redoctor_falls_back_to_nginx_heuristics(self, monkeypatch):
+        monkeypatch.setattr("gixy.plugins.regex_redos.REDOCTOR_AVAILABLE", False)
+        vulnerabilities = RedosAnalyzer("(a+)+", deep=True).analyze()
+        assert len(vulnerabilities) == 1
+        assert "Nested quantifier" in str(vulnerabilities[0])

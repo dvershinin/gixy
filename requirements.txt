@@ -3,7 +3,8 @@ cached-property>=1.2.0
 argparse>=1.4.0
 Jinja2>=2.8
 ConfigArgParse>=0.11.0
-redoctor>=0.1.5
+# Optional deep ReDoS analysis: pip install 'gixy-ng[deep]'
+# redoctor>=0.1.5
 # Optional: beautiful terminal output; install with: pip install gixy-ng[rich]
 # rich>=13.0.0
 # Optional: PSL-based origin checks; install for improved origins analysis

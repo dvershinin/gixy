@@ -52,7 +52,7 @@ deep = true
 - 写报告到文件：`output = /path/to/report.txt`（等同 `-o/--output`）
 - 禁用 include 处理：`disable-includes = true`（等同 `--disable-includes`）
 - 自定义变量目录：`vars-dirs = [/etc/gixy/vars, ~/.config/gixy/vars]`（详见“自定义变量扩展”）
-- 深度分析：`deep = true`（等同 `--deep`；启用本地 ReDoctor 自动机分析和受限的自定义 VM 模糊测试）
+- 深度分析：`deep = true`（等同 `--deep`；需要可选的 `gixy-ng[deep]` extra，并启用本地 ReDoctor 自动机分析和受限的自定义 VM 模糊测试）
 
 ### 完整示例
 

@@ -13,6 +13,7 @@ from gixy.core.exceptions import InvalidConfiguration
 from gixy.core.manager import Manager as Gixy
 from gixy.core.plugins_manager import PluginsManager
 from gixy.formatters import get_all as formatters
+from gixy.plugins.regex_redos import REDOCTOR_AVAILABLE
 
 LOG = logging.getLogger()
 
@@ -260,7 +261,7 @@ def _get_cli_parser():
         default=False,
         help=(
             "Run slower, more precise structural checks. Currently enables "
-            "ReDoctor hybrid ReDoS analysis."
+            "ReDoctor hybrid ReDoS analysis (requires gixy-ng[deep])."
         ),
     )
 
@@ -466,6 +467,13 @@ def main():
                 val = [x.strip() for x in val.split(",")]
             options[opt_key] = val
         config.set_for(name, options)
+
+    if config.get_for("regex_redos").get("deep") and not REDOCTOR_AVAILABLE:
+        sys.stderr.write(
+            "Deep ReDoS analysis requires ReDoctor. "
+            "Install it with: pip install 'gixy-ng[deep]'\n"
+        )
+        sys.exit(2)
 
     formatter = formatters()[config.output_format]()
     failed = False

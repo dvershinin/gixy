@@ -41,9 +41,10 @@ location ~ ^/a+$ {
 ## 深度分析
 
 ```bash
+pip install 'gixy-ng[deep]'
 gixy --deep /etc/nginx/nginx.conf
 ```
 
-此模式把正则分析交给 [ReDoctor](https://redoctor.getpagespeed.com/)：它结合自动机分析与安全自定义正则 VM 中的受限模糊测试，可检测指数级和多项式级歧义，包括 `.*a.*a` 这类非局部模式。Gixy 仍负责 nginx 模式提取和报告；遇到 `unknown` 或错误结果时会回退到默认结构检查。所有分析均在本地进行，并禁用 runtime recall，因此不会用 Python 回溯引擎执行 nginx 正则。
+ReDoctor 是可选依赖；普通 Gixy 和 RPM 安装在未安装它时仍使用内置的快速启发式检查。`--deep` 模式把正则分析交给 [ReDoctor](https://redoctor.getpagespeed.com/)：它结合自动机分析与安全自定义正则 VM 中的受限模糊测试，可检测指数级和多项式级歧义，包括 `.*a.*a` 这类非局部模式。Gixy 仍负责 nginx 模式提取和报告；遇到 `unknown` 或错误结果时会回退到默认结构检查。所有分析均在本地进行，并禁用 runtime recall，因此不会用 Python 回溯引擎执行 nginx 正则。
 
 --8<-- "zh/snippets/nginx-extras-cta.md"

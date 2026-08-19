@@ -15,8 +15,9 @@ install_requires = [
     'argparse>=1.4.0;python_version<"3.2"',
     "Jinja2>=2.8",
     "ConfigArgParse>=0.11.0",
-    "redoctor>=0.1.5",
 ]
+
+deep_requires = ["redoctor>=0.1.5"]
 
 tests_requires = [
     "pytest>=7.0.0",
@@ -42,10 +43,6 @@ setup(
     author_email="buglloc@yandex.ru, info@getpagespeed.com",
     url="https://github.com/dvershinin/gixy",
     install_requires=install_requires,
-    extras_require={
-        "tests": install_requires + tests_requires,
-        "rich": ["rich>=13.0.0"],  # Optional: beautiful terminal output
-    },
     entry_points={
         "console_scripts": ["gixy=gixy.cli.main:main"],
     },
@@ -68,4 +65,9 @@ setup(
         "Programming Language :: Python :: 3.13",
     ],
     include_package_data=True,
+    extras_require={
+        "deep": deep_requires,
+        "tests": install_requires + deep_requires + tests_requires,
+        "rich": ["rich>=13.0.0"],
+    },
 )

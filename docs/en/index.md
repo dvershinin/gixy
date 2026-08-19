@@ -93,6 +93,9 @@ yum -y install https://extras.getpagespeed.com/release-latest.rpm
 yum -y install gixy
 ```
 
+The RPM includes Gixy's default fast ReDoS heuristics. The optional
+ReDoctor-backed `--deep` mode is not a runtime requirement of the RPM.
+
 ### macOS / Linux (Homebrew)
 
 ```bash
@@ -118,6 +121,12 @@ Gixy is distributed on [PyPI](https://pypi.python.org/pypi/gixy-ng). The best wa
 
 ```bash
 pip install gixy-ng
+```
+
+For optional ReDoctor-backed deep ReDoS analysis, install:
+
+```bash
+pip install 'gixy-ng[deep]'
 ```
 
 Run Gixy and check results:
