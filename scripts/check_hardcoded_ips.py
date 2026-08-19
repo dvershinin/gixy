@@ -36,15 +36,27 @@ SAFE_PATTERNS = [
     '"""',  # Docstring
     "'''",  # Docstring
 ]
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def resolve_repo_path(filepath):
+    """Resolve a path and require it to remain inside the repository."""
+    candidate = Path(filepath).resolve()
+    try:
+        candidate.relative_to(REPO_ROOT)
+    except ValueError:
+        raise ValueError(f"Path is outside the repository: {filepath}")
+    return candidate
 
 
 def check_file(filepath):
     """Check a single file for hardcoded IPs."""
     issues = []
     try:
-        content = Path(filepath).read_text()
-    except Exception:
-        return issues
+        filepath = resolve_repo_path(filepath)
+        content = filepath.read_text()
+    except (OSError, UnicodeDecodeError, ValueError) as exc:
+        return [(filepath, 0, "invalid path", str(exc))]
 
     for lineno, line in enumerate(content.splitlines(), 1):
         # Skip safe patterns

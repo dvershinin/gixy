@@ -251,7 +251,7 @@ class RangeToken(Token):
             return context.char
 
         return chr(
-            random.randint(self.token[1][0], self.token[1][1])  # nosec B311
+            random.randint(self.token[1][0], self.token[1][1])  # nosec B311 NOSONAR - test string generation, not crypto
         )
 
     def __str__(self):

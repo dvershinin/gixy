@@ -6,7 +6,7 @@ WORKDIR /src
 COPY setup.py pyproject.toml MANIFEST.in ./
 COPY gixy/ ./gixy/
 
-RUN pip install --upgrade pip setuptools wheel && pip install .
+RUN pip install --upgrade pip setuptools wheel && pip install .  # NOSONAR - local package build
 
 USER nobody
 

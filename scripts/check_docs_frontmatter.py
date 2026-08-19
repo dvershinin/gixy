@@ -26,9 +26,20 @@ EXCLUDED_PATTERNS = [
 
 # Required front-matter fields
 REQUIRED_FIELDS = ["title", "description"]
+REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Regex to extract YAML front-matter
 FRONTMATTER_REGEX = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)  # NOSONAR
+
+
+def resolve_repo_path(filepath):
+    """Resolve a path and require it to remain inside the repository."""
+    candidate = Path(filepath).resolve()
+    try:
+        candidate.relative_to(REPO_ROOT)
+    except ValueError:
+        raise ValueError(f"Path is outside the repository: {filepath}")
+    return candidate
 
 
 def is_excluded(filepath):
@@ -64,13 +75,18 @@ def parse_frontmatter(frontmatter_text):
 
 def check_file(filepath):
     """Check a single file for proper front-matter."""
+    try:
+        filepath = resolve_repo_path(filepath)
+    except ValueError as exc:
+        return [str(exc)]
+
     if is_excluded(filepath):
         return []
 
     errors = []
 
     try:
-        content = Path(filepath).read_text(encoding="utf-8")
+        content = filepath.read_text(encoding="utf-8")
     except Exception as e:
         return [f"{filepath}: Could not read file: {e}"]
 
