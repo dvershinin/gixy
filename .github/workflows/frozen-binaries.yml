@@ -38,10 +38,15 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
+        shell: bash
         run: |
-          python -m pip install --only-binary=:all: pip==25.2 setuptools==75.8.0 wheel==0.45.1 build==1.2.2.post1 pyinstaller==6.15.0
-          python -m build --wheel --no-isolation
-          python -m pip install --only-binary=:all: dist/gixy_ng-*.whl
+          python -m pip install --only-binary=:all: \
+            ngxparse==0.5.16 \
+            Jinja2==3.1.6 \
+            ConfigArgParse==1.7.5 \
+            setuptools==75.8.0 \
+            pyinstaller==6.15.0
+          python setup.py install
 
       - name: Build binary with PyInstaller
         run: pyinstaller --onefile --name ${{ matrix.artifact }} --collect-all crossplane --collect-all gixy gixy/__main__.py
