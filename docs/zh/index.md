@@ -53,10 +53,14 @@ Gixy 目前可以发现：
 ```bash
 yum -y install https://extras.getpagespeed.com/release-latest.rpm
 yum -y install gixy
+
+# 可选：添加由 ReDoctor 支持的深度 ReDoS 分析
+yum -y install gixy-deep
 ```
 
-RPM 包含 Gixy 默认的快速 ReDoS 启发式检查。基于 ReDoctor 的 `--deep`
-模式是可选功能，不属于 RPM 的运行时依赖。
+基础 RPM 包含 Gixy 默认的快速 ReDoS 启发式检查，且不依赖 ReDoctor。
+签名的 [`gixy-deep` RPM](https://extras.getpagespeed.com/redhat/repoview/gixy-deep.html)
+会为 `gixy --deep` 添加 ReDoctor，同时保持基础包的依赖不变。
 
 ### 其他系统
 

@@ -95,6 +95,15 @@ Gixy analyzes the parsed regex structure locally, without sending patterns to an
 
 For a more complete analysis, run:
 
+On RPM-based systems with GetPageSpeed Extras enabled:
+
+```bash
+sudo dnf install gixy-deep
+gixy --deep /etc/nginx/nginx.conf
+```
+
+Or install the optional Python extra:
+
 ```bash
 pip install 'gixy-ng[deep]'
 gixy --deep /etc/nginx/nginx.conf
@@ -102,7 +111,14 @@ gixy --deep /etc/nginx/nginx.conf
 
 Deep mode delegates the regex analysis to [ReDoctor](https://redoctor.getpagespeed.com/), a Python implementation of recheck's hybrid approach. ReDoctor combines automata analysis for exponential and polynomial ambiguity with bounded fuzzing in its safe custom regex VM. This catches non-local cases such as `.*a.*a` that simple nested-quantifier checks miss, and clears local false positives such as `(a|ab)+` when the automaton proves the paths unambiguous.
 
-ReDoctor is an optional dependency; normal Gixy and RPM installations keep using the built-in fast heuristics without it. Gixy keeps its nginx-specific pattern extraction and reporting. ReDoctor results that are unknown or invalid fall back to Gixy's default structural checks. Analysis stays local, and Gixy uses ReDoctor's quick profile with runtime recall disabled, so nginx patterns are never executed by Python's backtracking regex engine.
+ReDoctor is an optional dependency; normal Gixy installations keep using the
+built-in fast heuristics without it. The `gixy-deep` metapackage adds the same
+deep-analysis dependency as the `gixy-ng[deep]` Python extra while the base RPM
+remains independent. Gixy keeps its nginx-specific pattern extraction and
+reporting. ReDoctor results that are unknown or invalid fall back to Gixy's
+default structural checks. Analysis stays local, and Gixy uses ReDoctor's quick
+profile with runtime recall disabled, so nginx patterns are never executed by
+Python's backtracking regex engine.
 
 ## Recommendations
 

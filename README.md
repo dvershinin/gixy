@@ -81,10 +81,14 @@ Gixy detects a wide range of security issues across these categories:
 ```bash
 yum -y install https://extras.getpagespeed.com/release-latest.rpm
 yum -y install gixy
+
+# Optional: add ReDoctor-backed deep ReDoS analysis
+yum -y install gixy-deep
 ```
 
-The RPM contains Gixy's default fast ReDoS heuristics. ReDoctor-backed
-`--deep` analysis is an optional Python extra and is not required by the RPM.
+The base RPM contains Gixy's default fast ReDoS heuristics and does not require
+ReDoctor. The signed [`gixy-deep` RPM](https://extras.getpagespeed.com/redhat/repoview/gixy-deep.html)
+adds ReDoctor for `gixy --deep` without changing the base package dependency set.
 
 ## macOS / Linux (Homebrew)
 
@@ -202,7 +206,12 @@ Use `--no-backup` to skip creating backup files.
 
 Or something else, you can find all other `gixy` arguments with the help command: `gixy --help`
 
-With the optional `gixy-ng[deep]` extra installed, use `gixy --deep nginx.conf` for a more precise ReDoS pass. Deep mode delegates to [ReDoctor](https://redoctor.getpagespeed.com/), combining automata analysis with bounded fuzzing in a safe custom regex VM. Analysis stays local, and Gixy disables ReDoctor's runtime recall step so nginx regexes are never executed by Python's backtracking engine.
+With the optional ReDoctor dependency installed through `gixy-ng[deep]` (pip)
+or `gixy-deep` (RPM), use `gixy --deep nginx.conf` for a more precise ReDoS
+pass. Deep mode delegates to [ReDoctor](https://redoctor.getpagespeed.com/),
+combining automata analysis with bounded fuzzing in a safe custom regex VM.
+Analysis stays local, and Gixy disables ReDoctor's runtime recall step so nginx
+regexes are never executed by Python's backtracking engine.
 
 ### Plugin options
 
@@ -217,7 +226,7 @@ Some plugins expose options which you can set via CLI flags or config file. CLI 
   - `--add-header-redefinition-headers headers`: Comma-separated allowlist of header names (case-insensitive). When set, only dropped headers from this list will be reported; when unset, all dropped headers are reported. Example: `--add-header-redefinition-headers x-frame-options,content-security-policy`. Default: unset (report all).
 
 - `regex_redos`:
-  - `--regex-redos-deep true|false`: Enable the same ReDoctor analysis as top-level `--deep`. Requires `gixy-ng[deep]`. Default: `false`.
+  - `--regex-redos-deep true|false`: Enable the same ReDoctor analysis as top-level `--deep`. Requires `gixy-ng[deep]` from pip or the `gixy-deep` RPM. Default: `false`.
 
 Examples (config file):
 ```

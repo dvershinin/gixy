@@ -91,10 +91,14 @@ Something not detected? Please open an issue on our [GitHub repository](https://
 ```bash
 yum -y install https://extras.getpagespeed.com/release-latest.rpm
 yum -y install gixy
+
+# Optional: add ReDoctor-backed deep ReDoS analysis
+yum -y install gixy-deep
 ```
 
-The RPM includes Gixy's default fast ReDoS heuristics. The optional
-ReDoctor-backed `--deep` mode is not a runtime requirement of the RPM.
+The base RPM includes Gixy's default fast ReDoS heuristics and does not require
+ReDoctor. The signed [`gixy-deep` RPM](https://extras.getpagespeed.com/redhat/repoview/gixy-deep.html)
+adds ReDoctor for `gixy --deep` without changing the base package dependency set.
 
 ### macOS / Linux (Homebrew)
 

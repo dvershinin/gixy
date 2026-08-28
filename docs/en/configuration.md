@@ -54,7 +54,7 @@ The same effect can be achieved without sections by combining the check name and
 - **Write report to file**: `output = /path/to/report.txt` (same as `-o/--output`)
 - **Disable include processing**: `disable-includes = true` (same as `--disable-includes`)
 - **Custom variables directories**: `vars-dirs = [/etc/gixy/vars, ~/.config/gixy/vars]` (see "Custom variables drop-ins")
-- **Deep analysis**: `deep = true` (same as `--deep`; requires the optional `gixy-ng[deep]` extra and enables local ReDoctor automata and bounded custom-VM analysis)
+- **Deep analysis**: `deep = true` (same as `--deep`; requires `gixy-ng[deep]` from pip or the `gixy-deep` RPM and enables local ReDoctor automata and bounded custom-VM analysis)
 
 ## Full Example
 

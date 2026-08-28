@@ -52,7 +52,7 @@ deep = true
 - Запись отчёта в файл: `output = /path/to/report.txt` (то же, что `-o/--output`)
 - Отключить обработку include: `disable-includes = true` (то же, что `--disable-includes`)
 - Каталоги кастомных переменных: `vars-dirs = [/etc/gixy/vars, ~/.config/gixy/vars]` (см. «Пользовательские переменные (drop-ins)»)
-- Глубокий анализ: `deep = true` (то же, что `--deep`; требует необязательный extra `gixy-ng[deep]` и включает локальный анализ ReDoctor с автоматами и ограниченным фаззингом в собственной VM)
+- Глубокий анализ: `deep = true` (то же, что `--deep`; требует `gixy-ng[deep]` из pip или RPM `gixy-deep` и включает локальный анализ ReDoctor с автоматами и ограниченным фаззингом в собственной VM)
 
 ### Полный пример
 

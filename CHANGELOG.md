@@ -7,10 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **RPM documentation**: Documented the signed `gixy-deep` metapackage as the RPM equivalent of the `gixy-ng[deep]` Python extra across English, Russian, and Chinese installation and ReDoS guides.
+
 ## [0.2.51] - 2026-08-19
 
 ### Added
-- **Optional deep ReDoS analysis**: `gixy --deep` delegates regex analysis to ReDoctor's hybrid automata and bounded custom-VM engine, reports exponential or polynomial complexity with generated attack templates, and retains Gixy's NGINX-specific extraction, reporting, and structural fallback behavior. Install with `pip install 'gixy-ng[deep]'`.
+- **Optional deep ReDoS analysis**: `gixy --deep` delegates regex analysis to ReDoctor's hybrid automata and bounded custom-VM engine, reports exponential or polynomial complexity with generated attack templates, and retains Gixy's NGINX-specific extraction, reporting, and structural fallback behavior. Install with `pip install 'gixy-ng[deep]'` or the signed `gixy-deep` RPM.
 
 ### Changed
 - **ReDoctor remains optional**: Base, RPM, Homebrew, and other normal Gixy installations do not depend on ReDoctor. Requesting `--deep` without the extra exits with an actionable installation message. Runtime recall is disabled, so NGINX-supplied regexes are not executed by Python's backtracking engine.

@@ -59,10 +59,14 @@ Gixy — это инструмент для анализа конфигурац�
 ```bash
 yum -y install https://extras.getpagespeed.com/release-latest.rpm
 yum -y install gixy
+
+# Необязательно: добавить глубокий анализ ReDoS через ReDoctor
+yum -y install gixy-deep
 ```
 
-RPM включает быстрый встроенный анализ ReDoS. Режим `--deep` на основе
-ReDoctor является необязательным и не входит в зависимости RPM.
+Базовый RPM включает быстрый встроенный анализ ReDoS и не зависит от ReDoctor.
+Подписанный RPM [`gixy-deep`](https://extras.getpagespeed.com/redhat/repoview/gixy-deep.html)
+добавляет ReDoctor для `gixy --deep`, не меняя зависимости базового пакета.
 
 ### Другие системы
 
