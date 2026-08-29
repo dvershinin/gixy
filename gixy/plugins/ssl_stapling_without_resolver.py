@@ -12,7 +12,7 @@ class ssl_stapling_without_resolver(Plugin):
         "same or a parent scope. Without it, nginx cannot fetch the OCSP "
         "response from the issuing CA and stapling becomes a no-op — clients "
         "fall back to making their own OCSP requests, defeating the purpose "
-        "of stapling. Add `resolver 1.1.1.1 8.8.8.8 valid=300s ipv6=off;` to "
+        "of stapling. Add a *local* resolver — `resolver 127.0.0.1 valid=300s ipv6=off;` or your provider's internal DNS — to "
         "the server or http block. For production hardening also set "
         "`ssl_stapling_verify on;` and `resolver_timeout 5s;`."
     )

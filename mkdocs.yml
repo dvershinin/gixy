@@ -86,6 +86,8 @@ nav:
   - checks/weak-ssl-tls.md
   - checks/http2-misdirected-request.md
   - checks/ssl-stapling-without-resolver.md
+  - checks/ssl-stapling-letsencrypt.md
+  - checks/ssl-ecdh-curve.md
   - checks/status-page-exposed.md
   - checks/quic-bpf-reuseport.md
 - Performance Checks:

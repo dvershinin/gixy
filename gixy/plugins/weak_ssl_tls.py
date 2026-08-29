@@ -250,13 +250,26 @@ class weak_ssl_tls(Plugin):
                 reason="ssl_prefer_server_ciphers is on, forcing server cipher order. "
                 "With modern cipher lists (all strong AEAD ciphers), client cipher preference "
                 "improves performance — mobile clients without AES-NI benefit from choosing "
-                "ChaCha20-Poly1305 over AES-GCM. Mozilla and nginx maintainers recommend off.",
+                "ChaCha20-Poly1305 over AES-GCM. Mozilla and nginx maintainers recommend off. "
+                "If you must keep server preference (policy, compliance), add "
+                "`ssl_conf_command Options PrioritizeChaCha;` so the server order still "
+                "defers to clients that put ChaCha20-Poly1305 first.",
                 fixes=[
                     self.make_fix(
                         title="Disable server cipher preference",
                         search="ssl_prefer_server_ciphers on",
                         replace="ssl_prefer_server_ciphers off",
                         description="Let clients choose the most efficient cipher",
+                    ),
+                    self.make_fix(
+                        title="Keep server preference but prioritise ChaCha20",
+                        search="ssl_prefer_server_ciphers on;",
+                        replace="ssl_prefer_server_ciphers on;\n    ssl_conf_command Options PrioritizeChaCha;",
+                        description=(
+                            "SSL_OP_PRIORITIZE_CHACHA lets AES-NI-less clients still "
+                            "get ChaCha20-Poly1305 while the server keeps ordering "
+                            "everything else (nginx 1.19.4+, OpenSSL 1.1.1+)"
+                        ),
                     ),
                 ],
             )

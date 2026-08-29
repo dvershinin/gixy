@@ -150,7 +150,7 @@ server {
 ### Хорошо: Переменная с resolver
 
 ```nginx
-resolver 8.8.8.8 valid=30s;
+resolver 127.0.0.1 valid=30s;
 
 server {
     location /api {
@@ -163,7 +163,7 @@ server {
 ### Хорошо: Upstream с resolve (nginx 1.27.3+)
 
 ```nginx
-resolver 8.8.8.8;
+resolver 127.0.0.1;
 
 upstream backend {
     server api.example.com:8080 resolve;

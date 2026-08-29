@@ -500,7 +500,7 @@ class missing_resolver(Plugin):
             f"CRITICAL: '{directive_name}' targets {provider} endpoint '{hostname}'. "
             f"Cloud provider IPs change frequently! Static DNS resolution will cause "
             f"traffic to be sent to wrong/old IPs. You MUST use dynamic resolution: "
-            f"set $backend {hostname}; resolver 8.8.8.8 valid=10s; {directive_name} http://$backend;"
+            f"set $backend {hostname}; resolver 127.0.0.1 valid=10s; {directive_name} http://$backend;"
         )
         self.add_issue(
             severity=gixy.severity.HIGH,
@@ -546,7 +546,7 @@ class missing_resolver(Plugin):
         reason = (
             f"'{directive_name}' uses static hostname '{hostname}'. DNS resolved once at "
             f"startup - if IP changes, traffic goes to stale address until nginx restart. "
-            f"Consider: resolver 8.8.8.8 valid=30s; set $backend {hostname}; "
+            f"Consider: resolver 127.0.0.1 valid=30s; set $backend {hostname}; "
             f"{directive_name} http://$backend;"
         )
         self.add_issue(
@@ -562,7 +562,7 @@ class missing_resolver(Plugin):
         reason = (
             f"'{directive_name}' uses a variable but no 'resolver' directive found! "
             f"Without 'resolver', variable-based proxy_pass won't re-resolve DNS. "
-            f"Add: resolver 8.8.8.8 valid=30s; (or your internal DNS server)"
+            f"Add: resolver 127.0.0.1 valid=30s; (or your internal/VPC DNS server)"
         )
         self.add_issue(
             severity=gixy.severity.MEDIUM,

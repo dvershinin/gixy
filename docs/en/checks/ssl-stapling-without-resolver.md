@@ -12,6 +12,9 @@ When `ssl_stapling on;` is in effect for an SSL server but no `resolver` directi
 
 This is a pure configuration bug — there is no legitimate setup where you would enable `ssl_stapling` without configuring a `resolver`.
 
+!!! note "Let's Encrypt certificates"
+    If the certificate comes from Let's Encrypt, the fix is not to add a resolver — it is to remove the stapling directives entirely. Let's Encrypt shut its OCSP responders down on 2025-08-06 and no longer publishes an OCSP URL in its certificates. See [OCSP Stapling With a Let's Encrypt Certificate](ssl-stapling-letsencrypt.md).
+
 ## Bad Example
 
 ```nginx
@@ -48,7 +51,7 @@ Put the resolver at `http` level so every SSL server inherits it:
 
 ```nginx
 http {
-    resolver 1.1.1.1 8.8.8.8 valid=300s ipv6=off;
+    resolver 127.0.0.1 valid=300s ipv6=off;
     resolver_timeout 5s;
 
     ssl_stapling on;
