@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Documentation translations**: Added Russian and Chinese pages for the `ssl_ecdh_curve` and `ssl_stapling_letsencrypt` checks, which shipped English-only in 0.2.52.
+
 ## [0.2.52] - 2026-08-29
 
 ### Added
