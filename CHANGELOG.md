@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.52] - 2026-08-29
+
 ### Added
 - **`ssl_ecdh_curve` check (HIGH)**: Flags post-quantum group names (`X25519MLKEM768`, `SecP256r1MLKEM768`, the `X25519Kyber768*` drafts) used without the `?` prefix. OpenSSL rejects the entire group list when one name is unknown and nginx treats that as `NGX_LOG_EMERG`, so the config that every post-quantum blog post recommends is a startup failure — not a downgrade — on Debian 12, Ubuntu 24.04 and RHEL 9.
 - **`ssl_stapling_letsencrypt` check (LOW)**: Flags `ssl_stapling on` for certificates under `/etc/letsencrypt/`. Let's Encrypt stopped publishing OCSP URLs in early 2025 and shut its responders down on 2025-08-06, so stapling there is dead configuration.
