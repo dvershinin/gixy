@@ -100,6 +100,16 @@ brew install gixy
 
 Bottles are pre-built for macOS (Apple Silicon + Intel) and Linux (`x86_64`, `arm64`).
 
+## Alpine Linux
+
+```bash
+apk add gixy
+```
+
+Packaged as `gixy` in the `community` repository. Currently available on Alpine
+**edge**; it landed after `v3.24` branched, so it will reach stable with the next
+Alpine release. On a stable release, install from PyPI (below) until then.
+
 ## Arch Linux (AUR)
 
 ```bash

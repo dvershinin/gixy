@@ -62,6 +62,16 @@ yum -y install gixy-deep
 签名的 [`gixy-deep` RPM](https://extras.getpagespeed.com/redhat/repoview/gixy-deep.html)
 会为 `gixy --deep` 添加 ReDoctor，同时保持基础包的依赖不变。
 
+## Alpine Linux
+
+```bash
+apk add gixy
+```
+
+在 `community` 仓库中以 `gixy` 名称打包。目前可在 Alpine **edge** 分支中获取；
+由于它是在 `v3.24` 分支切出之后才合入的，因此会随下一个 Alpine 稳定版发布。
+在稳定版上，在此之前请使用下方的 PyPI 安装方式。
+
 ### 其他系统
 
 Gixy 在 [PyPI](https://pypi.python.org/pypi/gixy-ng) 发布，建议使用 pip 安装：

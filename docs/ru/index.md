@@ -68,6 +68,17 @@ yum -y install gixy-deep
 Подписанный RPM [`gixy-deep`](https://extras.getpagespeed.com/redhat/repoview/gixy-deep.html)
 добавляет ReDoctor для `gixy --deep`, не меняя зависимости базового пакета.
 
+## Alpine Linux
+
+```bash
+apk add gixy
+```
+
+Пакет называется `gixy` и находится в репозитории `community`. Сейчас доступен
+в ветке **edge**: он попал в aports уже после ответвления `v3.24`, поэтому в
+стабильные выпуски войдёт со следующим релизом Alpine. На стабильной версии до
+тех пор используйте установку с PyPI (ниже).
+
 ### Другие системы
 
 Gixy публикуется на [PyPI](https://pypi.python.org/pypi/gixy-ng). Рекомендуемый способ установки — через pip:
