@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.53] - 2026-09-02
+
+### Fixed
+- **`add_header_redefinition` inheritance semantics**: `add_header_inherit merge;` now suppresses the dropped-parent-header finding, including when inherited from an enclosing `http`, `server`, `location`, or `if` context. The default `on`, explicit `on`, `off`, and absent cases continue to report because they do not merge parent headers. The equivalent `add_trailer_inherit` behavior is also covered.
+
 ### Changed
 - **Documentation translations**: Added Russian and Chinese pages for the `ssl_ecdh_curve` and `ssl_stapling_letsencrypt` checks, which shipped English-only in 0.2.52.
 
