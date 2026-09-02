@@ -120,14 +120,21 @@ server {
     add_header X-Frame-Options "DENY" always;
 
     location /new-headers {
-        add_header_inherit on;  # Inherit X-Frame-Options from server
+        add_header_inherit merge;  # Append X-Frame-Options from server
         add_header Cache-Control "no-cache" always;
         return 200 "new-headers";
     }
 }
 ```
 
-This is the cleanest solution if you're running nginx 1.29.3 or later.
+Only `merge` fixes the redefinition trap. `on` is the default behavior and still
+inherits parent headers only when the current level declares no headers of its own;
+`off` disables inheritance. This is the cleanest solution if you're running nginx
+1.29.3 or later.
+
+The corresponding trailer directives use the same rules: use
+`add_trailer_inherit merge;` when nested `add_trailer` directives must append the
+parent trailers.
 
 ### 2. Duplicate important headers
 

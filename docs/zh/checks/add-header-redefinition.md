@@ -66,9 +66,14 @@ new-headers
 
 ## 如何规避？
 可以采用以下方法解决：
+- 在 nginx 1.29.3 及更高版本的嵌套上下文中使用 `add_header_inherit merge;`；
 - 重复设置重要响应头；
 - 将所有响应头放在同一层设置（`server` 段通常是个好选择）；
 - 使用 [ngx_headers_more](https://nginx-extras.getpagespeed.com/modules/headers-more/) 模块。
+
+只有 `merge` 会把父级响应头追加到当前级。`on` 是默认值，当前级存在自己的
+`add_header` 时仍不会继承父级响应头；`off` 则完全关闭继承。响应尾字段遵循相同
+规则，应使用 `add_trailer_inherit merge;`。
 
 --8<-- "zh/snippets/nginx-extras-cta.md"
 

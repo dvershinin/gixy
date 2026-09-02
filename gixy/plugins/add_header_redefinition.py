@@ -103,7 +103,7 @@ class add_header_redefinition(Plugin):
         server {
             add_header X-Content-Type-Options nosniff;
             location / {
-                add_header_inherit on;
+                add_header_inherit merge;
                 add_header X-Frame-Options DENY;
             }
         }
@@ -120,9 +120,10 @@ class add_header_redefinition(Plugin):
     summary = 'Nested "add_header" drops parent headers.'
     severity = gixy.severity.LOW
     description = (
-        '"add_header" replaces ALL parent headers. '
+        '"add_header" and "add_trailer" replace their corresponding parent fields. '
         "See documentation: https://nginx.org/en/docs/http/ngx_http_headers_module.html#add_header "
-        'Note: nginx 1.29.3+ supports "add_header_inherit on;" to inherit parent headers.'
+        'Note: nginx 1.29.3+ supports "add_header_inherit merge;" and '
+        '"add_trailer_inherit merge;" to append parent fields.'
     )
     directives = ["server", "location", "if"]
     options = {"headers": set()}
@@ -164,35 +165,53 @@ class add_header_redefinition(Plugin):
         if not directive.is_block:
             return
 
-        actual_headers_map = get_headers(directive)
-        actual_headers = set(actual_headers_map.keys())
-        if not actual_headers:
+        self._audit_field_family(directive, "add_header", "header")
+        self._audit_field_family(directive, "add_trailer", "trailer")
+
+    def _audit_field_family(self, directive, field_directive, field_kind):
+        actual_fields_map = get_fields(directive, field_directive)
+        actual_fields = set(actual_fields_map)
+        if not actual_fields:
             return
 
-        # Check if add_header_inherit is enabled (nginx 1.29.3+)
-        if has_header_inherit(directive):
+        inherit_directive = f"{field_directive}_inherit"
+        if get_effective_inheritance_mode(directive, inherit_directive) == "merge":
             return
 
         for parent in directive.parents:
-            parent_headers_map = get_headers(parent)
-            parent_headers = set(parent_headers_map.keys())
-            if not parent_headers:
+            parent_fields_map = get_fields(parent, field_directive)
+            parent_fields = set(parent_fields_map)
+            if not parent_fields:
                 continue
 
-            diff = parent_headers - actual_headers
-
+            diff = parent_fields - actual_fields
             if self.interesting_headers:
-                diff = diff & self.interesting_headers
+                diff &= self.interesting_headers
 
             if diff:
-                self._report_issue(directive, parent, diff, parent_headers_map)
+                self._report_issue(
+                    directive,
+                    parent,
+                    diff,
+                    parent_fields_map,
+                    field_directive,
+                    field_kind,
+                )
 
             break
 
-    def _report_issue(self, current, parent, diff, parent_headers_map):
+    def _report_issue(
+        self,
+        current,
+        parent,
+        diff,
+        parent_fields_map,
+        field_directive,
+        field_kind,
+    ):
         directives = []
-        directives.extend(parent.find("add_header"))
-        directives.extend(current.find("add_header"))
+        directives.extend(parent.find(field_directive))
+        directives.extend(current.find(field_directive))
 
         # Determine severity using intelligent classification
         is_secure_header_dropped = False
@@ -207,7 +226,7 @@ class add_header_redefinition(Plugin):
             # e.g., Cache-Control: no-store is security-protective
             #       Cache-Control: public is not
             if header in CONDITIONAL_SECURITY_HEADERS:
-                values = parent_headers_map.get(header, [])
+                values = parent_fields_map.get(header, [])
                 if is_security_protective_value(header, values):
                     is_secure_header_dropped = True
                     break
@@ -215,41 +234,48 @@ class add_header_redefinition(Plugin):
         issue_severity = (
             gixy.severity.MEDIUM if is_secure_header_dropped else self.severity
         )
-        reason = 'Parent header(s) "{headers}" dropped in nested block'.format(
-            headers='", "'.join(sorted(diff))
+        reason = 'Parent {kind}(s) "{headers}" dropped in nested block'.format(
+            kind=field_kind, headers='", "'.join(sorted(diff))
         )
-        self.add_issue(directive=directives, reason=reason, severity=issue_severity)
+        summary = None
+        if field_directive == "add_trailer":
+            summary = 'Nested "add_trailer" drops parent trailers.'
+        self.add_issue(
+            directive=directives,
+            summary=summary,
+            reason=reason,
+            severity=issue_severity,
+        )
 
 
 def get_headers(directive):
     """Get headers as a dict mapping header name (lowercase) -> list of values."""
-    headers_list = directive.find("add_header")
-    if not headers_list:
+    return get_fields(directive, "add_header")
+
+
+def get_fields(directive, field_directive):
+    """Get response fields as a lowercase name to values mapping."""
+    fields = directive.find(field_directive)
+    if not fields:
         return {}
 
     result = {}
-    for d in headers_list:
-        header = d.header.lower()
-        if header not in result:
-            result[header] = []
-        result[header].append(d.value)
+    for field in fields:
+        if len(field.args) < 2:
+            continue
+        name = field.args[0].lower()
+        value = field.args[1]
+        if name not in result:
+            result[name] = []
+        result[name].append(value)
     return result
 
 
-def has_header_inherit(directive):
-    """
-    Check if add_header_inherit is enabled in the directive.
+def get_effective_inheritance_mode(directive, inherit_directive):
+    """Resolve the nearest inheritance mode, matching nginx config merging."""
+    for context in (directive, *directive.parents):
+        configured = context.some(inherit_directive, flat=False)
+        if configured and configured.args:
+            return configured.args[0].lower()
 
-    nginx 1.29.3+ supports 'add_header_inherit on;' which causes headers
-    to be inherited from parent levels, making the redefinition warning
-    unnecessary.
-    """
-    inherit_directives = directive.find("add_header_inherit")
-    if not inherit_directives:
-        return False
-
-    for d in inherit_directives:
-        if d.args and d.args[0].lower() == "on":
-            return True
-
-    return False
+    return "on"
