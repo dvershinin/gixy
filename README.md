@@ -121,6 +121,16 @@ maintainer at the old 0.1.20 release); it declares `provides=('gixy')` and
 `conflicts=('gixy')`, so it's a drop-in replacement. Any AUR helper works
 (`paru`, `yay`, manual `makepkg -si`).
 
+## Conda (conda-forge)
+
+```bash
+conda install -c conda-forge gixy-ng
+```
+
+Also works with `mamba` and `micromamba`. The package is named `gixy-ng`, the
+installed command is still `gixy`. It is a `noarch` package, so one build serves
+Linux, macOS and Windows.
+
 ## Other systems
 
 Gixy is distributed on [PyPI](https://pypi.python.org/pypi/gixy-ng). The best way to install it is with pip:

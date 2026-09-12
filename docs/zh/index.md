@@ -62,6 +62,15 @@ yum -y install gixy-deep
 签名的 [`gixy-deep` RPM](https://extras.getpagespeed.com/redhat/repoview/gixy-deep.html)
 会为 `gixy --deep` 添加 ReDoctor，同时保持基础包的依赖不变。
 
+## macOS / Linux (Homebrew)
+
+```bash
+brew install gixy
+```
+
+已为 macOS（Apple Silicon 与 Intel）和 Linux（`x86_64`、`arm64`）预构建二进制包
+（bottles）。
+
 ## Alpine Linux
 
 ```bash
@@ -72,7 +81,26 @@ apk add gixy
 由于它是在 `v3.24` 分支切出之后才合入的，因此会随下一个 Alpine 稳定版发布。
 在稳定版上，在此之前请使用下方的 PyPI 安装方式。
 
-### 其他系统
+## Arch Linux (AUR)
+
+```bash
+yay -S gixy-ng
+```
+
+以 `gixy-ng` 名称发布（AUR 中原有的 `gixy` 槽位由另一位维护者持有，仍停留在
+0.1.20 版本）；该包声明了 `provides=('gixy')` 和 `conflicts=('gixy')`，因此可以
+直接替代。任何 AUR 助手均可使用（`paru`、`yay`，或手动执行 `makepkg -si`）。
+
+## Conda (conda-forge)
+
+```bash
+conda install -c conda-forge gixy-ng
+```
+
+同样适用于 `mamba` 和 `micromamba`。软件包名为 `gixy-ng`，但安装后的命令仍然是
+`gixy`。它是 `noarch` 包，因此同一份构建可用于 Linux、macOS 和 Windows。
+
+## 其他系统
 
 Gixy 在 [PyPI](https://pypi.python.org/pypi/gixy-ng) 发布，建议使用 pip 安装：
 
