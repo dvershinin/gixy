@@ -894,3 +894,21 @@ http {
     new_cves = {"CVE-2026-42533", "CVE-2026-60005", "CVE-2026-56434"}
     assert new_cves.isdisjoint(_cves_fired("1.30.4", multi))
     assert new_cves.isdisjoint(_cves_fired("1.31.3", multi))
+
+
+def test_cve_2026_90439_fires_with_http3_across_branches():
+    for version in ("1.29.2", "1.30.4", "1.31.5"):
+        assert "CVE-2026-90439" in _cves_fired(version, _HTTP3_ON), version
+
+
+def test_cve_2026_90439_silent_without_http3():
+    assert "CVE-2026-90439" not in _cves_fired("1.31.5", _PLAIN)
+
+
+def test_cve_2026_90439_silent_on_fixed_versions():
+    for version in ("1.30.5", "1.31.6"):
+        assert "CVE-2026-90439" not in _cves_fired(version, _HTTP3_ON), version
+
+
+def test_cve_2026_90439_silent_before_vulnerable_range():
+    assert "CVE-2026-90439" not in _cves_fired("1.29.1", _HTTP3_ON)

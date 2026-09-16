@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **CVE-2026-90439 in the `nginx_cves` database**: Buffer overflow in `ngx_http_v3_module` (vulnerable 1.29.2-1.31.5, fixed in 1.30.5 and 1.31.6). Fires only when HTTP/3 is enabled (`listen ... quic` or `http3 on`), matching the existing HTTP/3 CVE triggers.
+
 ## [0.2.53] - 2026-09-02
 
 ### Fixed

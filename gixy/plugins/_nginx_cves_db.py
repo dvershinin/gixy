@@ -813,6 +813,17 @@ def _advisory(cve_id):
 
 CVES = (
     {
+        "id": "CVE-2026-90439",
+        "nickname": "",
+        "summary": "Buffer overflow in ngx_http_v3_module.",
+        "severity": gixy.severity.MEDIUM,
+        "advisory": _advisory("CVE-2026-90439"),
+        "vulnerable_oss": (((1, 29, 2), (1, 31, 5)),),
+        "fixed_oss": ("1.30.5", "1.31.6"),
+        "fixed_plus": (),
+        "config_check": check_http3_enabled,
+    },
+    {
         "id": "CVE-2026-42533",
         "nickname": "",
         "summary": "Heap buffer overflow when using map with regex matching.",
