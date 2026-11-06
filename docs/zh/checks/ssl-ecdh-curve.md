@@ -1,24 +1,29 @@
 ---
-title: "导致 NGINX 无法启动的后量子 ssl_ecdh_curve"
-description: "ssl_ecdh_curve 中未加 ? 前缀的后量子群会让 OpenSSL 拒绝整个列表，导致 NGINX 在 Debian 12、Ubuntu 24.04 和 RHEL 9 上拒绝启动。"
+title: "ssl_ecdh_curve 与 NGINX 后量子密钥交换"
+description: "Gixy 检测会让 nginx 无法启动、悄然禁用 X25519MLKEM768 后量子密钥交换，或把它排在 X25519 之后的 ssl_ecdh_curve 列表。"
 ---
 
-# 导致 NGINX 无法启动的后量子 `ssl_ecdh_curve`
+# `ssl_ecdh_curve` 与后量子密钥交换
 
 _Gixy 检查 ID：`ssl_ecdh_curve`_
 
-如今每一篇「为 nginx 添加后量子 TLS」的文章都以同一行结尾：
+自 OpenSSL 3.5 提供 `X25519MLKEM768` 后量子混合群以来，这条一行的指令有三种不同的出错方式：
+
+| 问题 | 严重性 | 示例 |
+|---|---|---|
+| 后量子群缺少 `?` 前缀 | HIGH | `X25519MLKEM768:X25519:prime256v1` |
+| 只有经典群 | MEDIUM | `X25519:secp384r1:prime256v1` |
+| 后量子群与经典群处于同一层级 | LOW | `?X25519MLKEM768:X25519:prime256v1` |
+
+对于链接 OpenSSL 3.5+ 的 nginx，最干净的做法是**完全不设置该指令**。如果必须固定列表，请把混合群放在单独的最高层级：
 
 ```nginx
-ssl_ecdh_curve X25519MLKEM768:X25519:prime256v1;
+ssl_ecdh_curve ?X25519MLKEM768/X25519:prime256v1;
 ```
 
-把它复制到 OpenSSL 版本早于 3.5 的机器上，站点就会挂掉。不是「失去后量子支持」，
-而是彻底挂掉。
+## HIGH：导致 nginx 无法启动的后量子群
 
-## 为什么这是硬性故障而不是降级
-
-nginx 会把该值直接交给 OpenSSL：
+nginx 会把值直接交给 OpenSSL：
 
 ```c
 /* src/event/ngx_event_openssl.c */
@@ -29,87 +34,62 @@ if (SSL_CTX_set1_curves_list(ssl->ctx, &conf->ecdh_curve...) == 0) {
 }
 ```
 
-两个特性叠加后果很糟：
+两个特性叠加后很糟糕：
 
-1. **只要有一个群名未知，OpenSSL 就会拒绝整个列表**。不存在部分接受的情况——
-   `X25519MLKEM768:X25519:prime256v1` 会整体失败，尽管其中两个群是普遍支持的。
-2. **nginx 以 `NGX_LOG_EMERG` 级别记录该错误**并返回失败，因此主进程根本无法完成
-   配置解析。这是启动失败，而不是单个连接层面的回退。
+1. 只要有一个群名未知，**OpenSSL 就会拒绝整个列表**。不存在部分接受：`X25519MLKEM768:X25519:prime256v1` 会整体失败，尽管其中两个群处处可用。
+2. **nginx 以 `NGX_LOG_EMERG` 级别记录**并返回错误，主进程无法完成配置。这是启动失败，而不是单个连接的回退。
 
-已在 OpenSSL 3.6.3 上验证：
+`X25519MLKEM768` 等群在 **OpenSSL 3.5** 中加入。各发行版自带的版本（2026 年 11 月核实）：
 
-```console
-$ openssl s_client -groups bogusgroup -connect 127.0.0.1:1
-Call to SSL_CONF_cmd(-groups, bogusgroup) failed
-
-$ openssl s_client -groups '?bogusgroup:X25519' -connect 127.0.0.1:1
-connect:errno=61          # 列表已被接受；失败的只是 TCP 连接
-```
-
-`X25519MLKEM768` 及同类群是在 **OpenSSL 3.5** 中引入的。而运行生产环境 nginx
-最多的那些发行版所附带的版本更旧：
-
-| 发行版 | OpenSSL | `X25519MLKEM768` |
+| 发行版 | 系统 OpenSSL | `X25519MLKEM768` |
 |---|---|---|
+| Debian 13 (trixie) | 3.5 | ✓ |
+| RHEL / AlmaLinux / Rocky 9 (9.8) | 3.5 | ✓ |
 | Debian 12 (bookworm) | 3.0 | ✗ nginx 无法启动 |
-| Ubuntu 24.04 LTS | 3.0 | ✗ nginx 无法启动 |
-| RHEL / AlmaLinux / Rocky 9 | 3.2 | ✗ nginx 无法启动 |
+| Ubuntu 24.04 / 22.04 LTS | 3.0 | ✗ nginx 无法启动 |
+| RHEL / AlmaLinux / Rocky 8 | 1.1.1 | ✗ nginx 无法启动 |
 
-在写下任何后量子群名之前，先用 `openssl version` 确认你实际使用的版本；
-`openssl list -tls-groups`（OpenSSL 3.x）会列出所链接的库真正接受的群集合。
+关键在于 *nginx* 链接的库，而不是系统库：用 `nginx -V 2>&1 | grep "built with"` 查看。[GetPageSpeed 的 NGINX 软件包](https://www.getpagespeed.com/repo-subscribe)在上述所有平台上都链接 OpenSSL 3.5 LTS，包括系统只有 3.0 和 1.1.1 的平台。
 
-同样的问题也适用于旧版 BoringSSL 构建和 2024 年前后的指南所使用的标准化之前的
-`X25519Kyber768Draft00` 名称。
+旧版基于 BoringSSL 的构建和 2024 年的教程中使用的标准化前名称 `X25519Kyber768Draft00` 也会以同样方式失败。
 
-## 错误示例
+### `?` 前缀本身的版本限制
 
-```nginx
-server {
-    listen 443 ssl;
-    server_name example.com;
+`?` 让 OpenSSL 跳过不认识的群名，而不是让整个列表失败。它在 **OpenSSL 3.3** 中加入：在 OpenSSL 3.0 和 3.2 上，`?X25519MLKEM768` 本身就是无法解析的名称，同样会失败。下文的层级分隔符 `/` 需要 OpenSSL 3.5。因此：
 
-    ssl_certificate     /etc/ssl/certs/example.com.pem;
-    ssl_certificate_key /etc/ssl/private/example.com.key;
+- **OpenSSL 3.5+**：`?X25519MLKEM768/X25519:prime256v1`，或不设置指令。
+- **OpenSSL 3.3 / 3.4**：没有 ML-KEM。`?` 能防止列表失败，但没有可协商的后量子群。
+- **OpenSSL 3.0 / 3.2 / 1.1.1**：完全不要写后量子群。不设置该指令，或只列出经典曲线。
 
-    # 只要有一个未知名称，主进程就会拒绝启动
-    ssl_ecdh_curve X25519MLKEM768:X25519:prime256v1;
-}
-```
-
-## 正确示例
-
-给后量子群加上 `?` 前缀。这样 OpenSSL 会跳过它不认识的名称，而不是让整个列表失败：
+## MEDIUM：只有经典群
 
 ```nginx
-server {
-    listen 443 ssl;
-    server_name example.com;
-
-    ssl_certificate     /etc/ssl/certs/example.com.pem;
-    ssl_certificate_key /etc/ssl/private/example.com.key;
-
-    ssl_ecdh_curve ?X25519MLKEM768:X25519:prime256v1;
-}
+# ML-KEM 之前的加固建议。在 OpenSSL 3.5+ 上它会关闭后量子密钥交换。
+ssl_ecdh_curve X25519:secp384r1:prime256v1;
 ```
 
-装有 OpenSSL 3.5+ 的机器会协商出 `X25519MLKEM768`；较旧的机器则会静默回退到
-`X25519` 并继续提供服务。
+显式列表会**替换** OpenSSL 的默认值，而不是在其基础上追加。OpenSSL 3.5+ 的默认列表以 `X25519MLKEM768` 开头，只含经典群的列表会让所有客户端（包括浏览器）都无法使用混合群。`nginx -t` 照常通过，日志里什么也没有，浏览器的锁形图标也一样。
 
-## `?` 前缀本身也有版本门槛
+在任何 OpenSSL 版本上都安全的修复是删除该指令，沿用库的默认值。在 OpenSSL 3.5+ 上也可以在前面加一个后量子层级：`?X25519MLKEM768/X25519:secp384r1:prime256v1`。
 
-`?` 是在 **OpenSSL 3.3** 中加入的。在 OpenSSL 3.0 和 3.2 上，`?X25519MLKEM768`
-本身就是一个无法解析的群名，会以完全相同的方式失败。因此：
+## LOW：后量子群与经典群处于同一层级
 
-- **OpenSSL 3.5+** —— 可以直接列出后量子群，或加上 `?`。
-- **OpenSSL 3.3 / 3.4** —— 使用 `?`，让配置向前兼容。
-- **OpenSSL 3.0 / 3.2（Debian 12、Ubuntu 24.04、RHEL 9）** —— 完全不要写后量子
-  群。保留 `ssl_ecdh_curve auto;`（nginx 默认值），或只列出经典曲线。
+OpenSSL 3.5 把群列表视为**偏好层级**：`:` 把群合并为同一层级，`/` 开始下一个更低的层级。在同一层级内，服务器采用客户端最先发送的密钥份额（key share）；只有在层级之间，它才会坚持更强的群。
 
-如果同一份配置要下发到版本混杂的服务器群，请在构建时决定是否启用该指令，而不要
-指望 `?` 能救你。
+TLS 1.3 客户端可以提供某个群而不为它发送密钥份额。面对 `?X25519MLKEM768:X25519:prime256v1`，一个提供混合群但先发送 X25519 份额的客户端会协商出经典的 X25519。改用 `?X25519MLKEM768/X25519:prime256v1` 后，服务器会回复 HelloRetryRequest 索要混合群份额，代价是多一次往返。
+
+在 nginx 1.30 + OpenSSL 3.5.9 上的实测：
+
+| 客户端密钥份额 | `A:B`（同一层级） | `A/B`（两个层级） |
+|---|---|---|
+| 混合群, X25519 | `X25519MLKEM768` | `X25519MLKEM768` |
+| X25519, 混合群 | `X25519` | `X25519MLKEM768` |
+| 仅 X25519，提供混合群 | `X25519` | `X25519MLKEM768`（HRR） |
+
+当前的 Chrome、Firefox、curl/OpenSSL 3.5、Go 和 Java 都会发送混合群份额，两种写法下都能协商出 `X25519MLKEM768`。层级只对先发送 X25519 的客户端有影响，例如 Cloudflare 在 2026 年推出 Automatic Key Exchange 之前的回源连接。因此该问题的严重性为 LOW。
 
 ## 本检查不会标记的情况
 
-- `ssl_ecdh_curve auto;` —— nginx 的默认值；群列表由 OpenSSL 选择。
-- 仅使用经典曲线（`X25519:prime256v1:secp384r1`）。
-- 已经带有 `?` 前缀的后量子群。
+- 没有 `ssl_ecdh_curve`，或 `ssl_ecdh_curve auto;`（nginx 默认值）。
+- 基于 OpenSSL `DEFAULT` 关键字的列表，例如 `DEFAULT:-X448`。
+- 带 `?` 前缀并位于单独最高层级的后量子群。

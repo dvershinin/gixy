@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`ssl_ecdh_curve`: classical-only group lists (MEDIUM)**. An explicit list
+  replaces OpenSSL's default, so `X25519:secp384r1:prime256v1` on nginx linked
+  against OpenSSL 3.5+ turns `X25519MLKEM768` post-quantum key exchange off for
+  every client, browsers included. The fixes remove the directive, or prepend a
+  post-quantum tier on OpenSSL 3.5+.
+- **`ssl_ecdh_curve`: post-quantum groups sharing a preference tier with
+  classical ones (LOW)**. OpenSSL 3.5 takes the client's leading key share
+  inside a `:`-joined tier, so `?X25519MLKEM768:X25519` negotiates classical
+  X25519 with clients that lead with an X25519 share. The fix moves the hybrids
+  into their own top tier: `?X25519MLKEM768/X25519:prime256v1`.
+
+### Fixed
+- **`ssl_ecdh_curve` parsing of `/` tiers and `?`/`*`/`-` prefixes**. Groups were
+  split on `:` only, so `X25519/X25519MLKEM768` produced a broken suggested fix.
+  `DEFAULT`-based lists are no longer flagged.
+- **`ssl_ecdh_curve` HIGH fix now ranks post-quantum first**. It used to add `?`
+  to the existing colon list, which keeps the shared-tier downgrade above.
+- **`ssl_ecdh_curve` docs**: RHEL 9.8 and Debian 13 ship OpenSSL 3.5; the
+  distribution table said RHEL 9 cannot start with a post-quantum group.
+
 ## [0.2.60] - 2026-10-30
 
 ### Added
