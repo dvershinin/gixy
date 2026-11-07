@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.61] - 2026-11-07
+
 ### Added
 - **`ssl_ecdh_curve`: classical-only group lists (MEDIUM)**. An explicit list
   replaces OpenSSL's default, so `X25519:secp384r1:prime256v1` on nginx linked
