@@ -4,6 +4,11 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to rebuild and upload binaries for (empty = build only)
+        required: false
+        default: ''
 
 jobs:
   build:
@@ -13,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-14
+          - runner: macos-15
             os: darwin
             arch: arm64
             artifact: gixy-darwin-arm64
@@ -31,6 +36,8 @@ jobs:
             artifact: gixy-windows-x64.exe
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -63,11 +70,11 @@ jobs:
           path: dist/${{ matrix.artifact }}
           # Release runs copy these to the GitHub release; the artifact is only a
           # job handoff. The 90-day default filled the 500 MB Actions storage quota.
-          retention-days: ${{ github.event_name == 'release' && 1 || 7 }}
+          retention-days: ${{ (github.event_name == 'release' || inputs.tag != '') && 1 || 7 }}
 
   checksums:
     name: Generate checksums and upload assets
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' || inputs.tag != ''
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -91,4 +98,5 @@ jobs:
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
           files: release/*
