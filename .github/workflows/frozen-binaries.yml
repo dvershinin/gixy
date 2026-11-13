@@ -74,7 +74,10 @@ jobs:
 
   checksums:
     name: Generate checksums and upload assets
-    if: github.event_name == 'release' || inputs.tag != ''
+    # Runs after a failed build leg too: a platform whose hosted runner never
+    # arrives must not hold back the binaries that did build. Re-run with
+    # tag=<release tag> later to add the missing one.
+    if: ${{ !cancelled() && (github.event_name == 'release' || inputs.tag != '') }}
     needs: build
     runs-on: ubuntu-latest
     permissions:
