@@ -1,0 +1,23 @@
+---
+description: Analysis outcome contract for the Python API, CLI exit codes, json_report and server mode
+globs: gixy/api.py,gixy/cli/main.py,gixy/cli/server.py,gixy/formatters/json*.py,gixy/formatters/base.py
+alwaysApply: false
+---
+
+# Analysis contract
+
+- @gixy/api.py is the stable entry point for embedders. Every result is
+  `analysed` (issues are complete), `rejected` (Gixy could not parse the
+  configuration) or `error` (the analysis did not complete). An empty `issues`
+  list means "clean" only with `analysed`.
+- `analyze()` must not raise for anything a configuration or its options can
+  cause; new failure modes become an `error` kind, not an exception.
+- `analyze()` keeps includes off by default: callers pass untrusted text.
+- @gixy/cli/main.py exit codes: 0 analysed and clean, 1 analysed with issues,
+  2 not analysed. Exit 2 wins when any input was not analysed.
+- @gixy/formatters/json_report.py and @gixy/cli/server.py report through
+  `gixy.api`; keep their `status` and error kinds in step with it. Bump
+  `REPORT_VERSION` only for an incompatible change to the report object.
+- `--format json` stays a bare list for existing consumers; do not add fields
+  to it.
+- Tests: @tests/core/test_api.py and @tests/cli/test_analysis_outcome.py.

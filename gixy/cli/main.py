@@ -7,6 +7,7 @@ import os
 import sys
 
 import gixy
+from gixy.api import describe_failure
 from gixy.cli.argparser import DefaultVarsAction, create_parser
 from gixy.cli.nginx_version import resolve_identity
 from gixy.core.nginx_flavors import load_definitions
@@ -517,6 +518,7 @@ def main():
 
     formatter = formatters()[config.output_format]()
     failed = False
+    unanalysed = False
     for path in nginx_files:
         with Gixy(config=config) as yoda:
             try:
@@ -528,7 +530,14 @@ def main():
                         yoda.audit(path, fdata, is_stdin=False)
             except InvalidConfiguration as e:
                 sys.stderr.write(f"Configuration error: {e}\n")
-                failed = True
+                unanalysed = True
+                formatter.feed_failure(path, *describe_failure(e))
+            except Exception as e:
+                LOG.error("Analysis of %s failed: %s", path, e, exc_info=True)
+                unanalysed = True
+                formatter.feed_failure(path, *describe_failure(e))
+                # A partial audit must not be reported as this file's findings.
+                continue
             formatter.feed(path, yoda)
             failed = failed or sum(yoda.stats.values()) > 0
 
@@ -575,7 +584,7 @@ def main():
             print(formatter.flush())
 
         # Exit with success if fixes were applied, even if issues were found
-        if args.fix and fixes_applied > 0 and fixes_failed == 0:
+        if args.fix and fixes_applied > 0 and fixes_failed == 0 and not unanalysed:
             sys.exit(0)
     else:
         # Normal mode - just print results
@@ -585,6 +594,9 @@ def main():
         else:
             print(formatter.flush())
 
+    if unanalysed:
+        # An input that was not analysed is neither a clean run nor a findings run.
+        sys.exit(2)
     if failed:
         # If something found - exit code must be 1, otherwise 0
         sys.exit(1)

@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`gixy.api.analyze()`: a stable Python entry point**. It takes configuration
+  text and returns a result whose `status` is `analysed`, `rejected` or `error`,
+  with the issues `--format json` prints or the reason there are none. It does
+  not raise for anything the configuration can cause, and does not follow
+  `include` directives unless asked to.
+- **`--format json_report`**. Prints one object with `report_version`,
+  `gixy_version`, `status`, `error` and `issues`, so a wrapper no longer has to
+  guess whether an empty list means "clean" or "not analysed".
+- **`status` in `gixy --server` responses**. The existing `issues` and `error`
+  fields are unchanged.
+
+### Fixed
+- **Exit code 2 when a configuration is not analysed**. A configuration Gixy
+  could not parse exited 1, the same code as "issues found", and
+  `--format json` printed `[]` for it, so wrappers showed it as a clean result.
+  It now exits 2, as the documentation already said. A crash during analysis
+  also exits 2 instead of ending in a traceback with exit code 1.
+- **Parse errors for stdin and server-mode text name the input**. The message
+  showed the path of an internal temporary file; it now shows `<stdin>` or the
+  filename the client gave.
+
 ## [0.2.61] - 2026-11-07
 
 ### Added

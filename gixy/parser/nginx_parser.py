@@ -48,8 +48,12 @@ class NginxParser:
         try:
             parsed = self.parser.parse_path(path)
         except ParseException as e:
-            error_msg = f"{e.msg} (line:{e.lineno}, col:{e.col})"
-            LOG.error(f'Failed to parse config "{path}": {error_msg}')
+            # Text parsed through a temporary file is reported under its own name.
+            shown_path = display_path if display_path else path
+            error_msg = (
+                f"{e.msg.replace(path, shown_path)} (line:{e.lineno}, col:{e.col})"
+            )
+            LOG.error(f'Failed to parse config "{shown_path}": {error_msg}')
             raise InvalidConfiguration(error_msg)
 
         current_path = display_path if display_path else path

@@ -9,9 +9,20 @@ class BaseFormatter:
     def __init__(self):
         self.reports = {}
         self.stats = dict.fromkeys(gixy.severity.ALL, 0)
+        self.failures = []
 
     def format_reports(self, reports, stats):
         raise NotImplementedError("Formatter must override format_reports function")
+
+    def feed_failure(self, path, status, error):
+        """Record an input that was not analysed.
+
+        Args:
+            path (str): Input that failed.
+            status (str): ``rejected`` or ``error``, as in ``gixy.api``.
+            error (dict): ``{"kind", "message"}`` description of the failure.
+        """
+        self.failures.append((path, status, error))
 
     def feed(self, path, manager):
         for severity in gixy.severity.ALL:

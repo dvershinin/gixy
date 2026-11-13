@@ -103,7 +103,7 @@ The same effect can be achieved without sections by combining the check name and
 
 ## Other Useful Options
 
-- **Output format**: `format = console|text|json|checkstyle` (same as `-f/--format`)
+- **Output format**: `format = console|text|json|json_report|checkstyle` (same as `-f/--format`)
 - **Write report to file**: `output = /path/to/report.txt` (same as `-o/--output`)
 - **Disable include processing**: `disable-includes = true` (same as `--disable-includes`)
 - **Custom variables directories**: `vars-dirs = [/etc/gixy/vars, ~/.config/gixy/vars]` (see "Custom variables drop-ins")

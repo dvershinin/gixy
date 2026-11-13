@@ -1,16 +1,10 @@
 """Server mode for Gixy -- NDJSON over stdin/stdout."""
 
-import io
 import json
-import logging
 import sys
 
 import gixy
-from gixy.core.exceptions import InvalidConfiguration
-from gixy.core.manager import Manager
-from gixy.formatters.json import JsonFormatter
-
-LOG = logging.getLogger(__name__)
+from gixy.api import analyze_with_config
 
 
 def run_server(config):
@@ -54,22 +48,16 @@ def _handle_analyze(req_id, request, config):
     filename = request.get("filename", "<stdin>")
     content = request.get("content", "")
 
-    try:
-        with Manager(config=config) as mgr:
-            data = io.BytesIO(content.encode("utf-8"))
-            mgr.audit(filename, data, is_stdin=True)
-
-            formatter = JsonFormatter()
-            formatter.feed(filename, mgr)
-            issues_json = formatter.flush()
-            issues = json.loads(issues_json) if issues_json else []
-
-        _write_response({"id": req_id, "issues": issues, "error": None})
-    except InvalidConfiguration as e:
-        _write_response({"id": req_id, "issues": [], "error": str(e)})
-    except Exception as e:
-        LOG.error("Analysis failed: %s", e, exc_info=True)
-        _write_response({"id": req_id, "issues": [], "error": str(e)})
+    result = analyze_with_config(content, config, filename=filename)
+    _write_response(
+        {
+            "id": req_id,
+            "status": result.status,
+            "issues": result.issues,
+            # A plain string: existing clients read "error" as text.
+            "error": result.error["message"] if result.error else None,
+        }
+    )
 
 
 def _write_response(obj):
