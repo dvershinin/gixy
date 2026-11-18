@@ -1,0 +1,29 @@
+---
+description: Scoped NGINX CVE predicates and advisory maintenance
+globs: gixy/plugins/_nginx_cves*.py,tests/plugins/test_nginx_cves*.py,docs/{en,ru,zh}/checks/nginx-cves.md
+alwaysApply: false
+---
+
+- @gixy/plugins/_nginx_cves_db.py owns OSS intervals;
+  @gixy/plugins/_nginx_cves_november.py owns November configuration predicates;
+  use nginx.org for historical OSS bounds and F5 CNA records for prerequisites.
+- Evaluate effective settings within their HTTP, mail or stream protocol roots.
+  Never combine sibling locations or unrelated servers; retain all active
+  same-scope logs. Stream settings inherit only from their stream ancestor.
+- Select stream default servers per listen address/port, honoring explicit
+  `default_server` and otherwise the first server on that listener. Respect
+  nearer overrides, explicit `off`, and version-dependent TLS defaults.
+- November 2026 adds ten F5 CNA prerequisites, bringing coverage to 73 of 77
+  official CVE IDs. Nine fixes are 1.30.7/1.31.9; CVE-2026-120993 affects only
+  mainline 1.31.4-1.31.8 and is fixed in 1.31.9. Keep the four exclusions.
+- Keep resolver subrequest checks, regex-map/try_files captures and dynamic
+  certificates lexical and bounded. Never claim request-time hostname equality,
+  connection exhaustion or exploitability from static prerequisite matches.
+- Reuse lexical variable helpers; do not execute supplied regexes or add a general
+  variable-flow engine. Keep legacy shared HTTP/3 predicates stable.
+- @tests/plugins/test_nginx_cves_october_scopes.py and
+  @tests/plugins/test_nginx_cves_november.py exercise real parser/auditor
+  prerequisites, overrides, anchors, counts and stable/mainline fix boundaries.
+- @docs/en/checks/nginx-cves.md and its Russian/Chinese translations must
+  distinguish version advice and prerequisites
+  from exploit proof, document exclusions and arbitrary-indirection limitations.

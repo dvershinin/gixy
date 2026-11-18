@@ -36,6 +36,7 @@ class Plugin:
 
     # Flag to indicate plugin supports full config analysis
     supports_full_config = False
+    full_config_subsystems = ("http",)
 
     def __init__(self, config):
         self._issues = []

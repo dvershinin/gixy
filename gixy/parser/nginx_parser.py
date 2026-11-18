@@ -246,6 +246,14 @@ class NginxParser:
         else:
             args = parsed_args
             term = ";"
+        # Stream proxy_protocol gained v2 in nginx 1.31.4. Crossplane's
+        # argument table still treats it as a boolean in all contexts.
+        if (
+            parsed_type == "directive"
+            and parsed_name == "proxy_protocol"
+            and args == ["v2"]
+        ):
+            return False
         # Crossplane's bundled njs arity predates optional nocache (0.8.7).
         # Validate these source-pinned declaration forms before its stale table.
         valid = None

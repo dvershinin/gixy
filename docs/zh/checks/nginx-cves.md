@@ -28,7 +28,36 @@ gixy --nginx-version=1.31.6 /etc/nginx/nginx.conf
 
 ## 当前数据库
 
-截至 2026 年 10 月，数据库收录了 [NGINX 开源版官方安全公告页面](https://nginx.org/en/security_advisories.html)上 67 个 CVE 编号中的 63 个，其中包括对已修复的稳定分支版本的更正。有四项被有意排除：仅影响 Windows 的 CVE-2011-4963、CVE-2010-2266 和 CVE-2010-2263，以及 CVE-2009-4487（日志转义问题，严重级别为 none，影响所有版本，无已修复的发布版本）。这些排除项并不意味着已完整覆盖所有与 NGINX 相关的产品。
+截至 2026 年 11 月，数据库收录了 [NGINX 开源版官方安全公告页面](https://nginx.org/en/security_advisories.html)上 77 个 CVE 编号中的 73 个，其中包括对已修复的稳定分支版本的更正。有四项被有意排除：仅影响 Windows 的 CVE-2011-4963、CVE-2010-2266 和 CVE-2010-2263，以及 CVE-2009-4487（日志转义问题，严重级别为 none，影响所有版本，无已修复的发布版本）。这些排除项并不意味着已完整覆盖所有与 NGINX 相关的产品。
+
+2026 年 11 月的更新新增十个 CVE。配置前提依据各项
+[F5 CNA 记录](https://github.com/CVEProject/cvelistV5/tree/main/cves/2026)，
+开源版受影响范围依据官方安全公告页面。
+
+| CVE | 检查的配置前提 |
+| --- | --- |
+| [CVE-2026-123634](https://www.cve.org/CVERecord?id=CVE-2026-123634) | 同一 HTTP server 中有两个代理上下文，包含相同的带变量主机名表达式及生效的 resolver，且发起上下文启用 SSI 或 mirror。实际子请求路由及主机名相同仍是运行时前提。 |
+| [CVE-2026-123007](https://www.cve.org/CVERecord?id=CVE-2026-123007) | 为客户端连接启用 HTTP/2。 |
+| [CVE-2026-121810](https://www.cve.org/CVERecord?id=CVE-2026-121810) | QUIC 监听器且生效的 HTTP/3 已启用。 |
+| [CVE-2026-123633](https://www.cve.org/CVERecord?id=CVE-2026-123633) | 同一 HTTP server 中启用客户端 HTTP/2 并向后端代理请求。无法静态确定运行时是否缺少 `worker_connections`。 |
+| [CVE-2026-118899](https://www.cve.org/CVERecord?id=CVE-2026-118899) | HTTP `listen ... ssl` 且生效的 `ssl_protocols` 包含 `TLSv1.3`。 |
+| [CVE-2026-113425](https://www.cve.org/CVERecord?id=CVE-2026-113425) | 已启用的邮件代理服务器。 |
+| [CVE-2026-120993](https://www.cve.org/CVERecord?id=CVE-2026-120993) | 同一 stream server 中启用 TLS、动态加载证书，并代理连接且生效 `proxy_protocol v2`。 |
+| [CVE-2026-125283](https://www.cve.org/CVERecord?id=CVE-2026-125283) | 生效的 `alias` 和 `try_files` 使用正则 `map` 变量及捕获组。具体捕获组合依赖请求，仍是运行时前提。 |
+| [CVE-2026-120967](https://www.cve.org/CVERecord?id=CVE-2026-120967) | 非默认的 TLS stream 虚拟服务器，且生效 `ssl_verify_client on`。 |
+| [CVE-2026-123640](https://www.cve.org/CVERecord?id=CVE-2026-123640) | stream 中生效 `ssl_preread on`。 |
+
+其中九项已在开源版 `1.30.7` 和 `1.31.9` 中修复。
+CVE-2026-120993 仅影响 `1.31.4`–`1.31.8`，在 `1.31.9` 中修复；
+稳定分支不受影响。
+
+HTTP、mail 和 stream 的设置分别限定在各自的协议上下文中。Stream 检查
+继承外层 `stream` 块的设置并应用 server 覆盖，不合并同级服务器。
+Stream 默认服务器按监听地址和端口确定：显式 `default_server` 优先，否则
+使用该监听器的第一个服务器。省略的指令采用 NGINX 文档规定的默认值，
+包括从开源版 `1.23.4` 起默认启用 `TLSv1.3`；显式 `off` 和更近层级的覆盖均会生效。
+监听器按字面端点分组，纯数字端口规范化为通配地址；不解析 DNS 名称，也不模拟
+所有重叠的套接字绑定。
 
 2026 年 9 月的更新包含 HTTP/3 模块中的 CVE-2026-90439，已在开源版 `1.30.5` 和 `1.31.6` 中修复。10 月的版本新增了以下条目：
 
@@ -68,7 +97,7 @@ in this config. Fixed in: 1.30.4, 1.31.3.
 ### 已打补丁的二进制文件
 
 ```
-$ gixy --nginx-version=1.30.6 nginx.conf  # silent: current fixes are present
+$ gixy --nginx-version=1.30.7 nginx.conf  # silent: current fixes are present
 ```
 
 ## 扩展数据库
@@ -94,10 +123,15 @@ $ gixy --nginx-version=1.30.6 nginx.conf  # silent: current fixes are present
 
 ## 局限性
 
+- **11 月条目的前提不等于漏洞可利用性证明。** Resolver 检查无法证明请求时
+  主机名相同，也不读取 SSI 页面。静态 regex/map 捕获检查无法证明某个请求
+  的精确捕获序列。这些报告无法确定 HTTP/2 连接资源紧张、特制协议流量、
+  TLS 库支持、ASLR 绕过或实际 stream 后端路由；也不解析任意变量间接引用。
+
 - **开源版版本匹配。** NGINX Plus 的 R 系列补丁模型需要按发布轨道设计专门的比较器；消息中仍会以纯文本形式提及 Plus 的修复版本，以便 Plus 运维人员手动应用。
 - **CVE-2026-42945 模式检查只针对直接同级作用域**（与产生漏洞利用的、按上下文进行的脚本引擎编译保持一致）。如果 `rewrite` 位于 `if {}` 块内，而后续的 `set` 位于该 `if` 之外，则不会被标记。
 - **满足前提不等于存在可利用的漏洞。** CVE-2026-97205 还要求 SSI 页面内容包含 `include virtual` 命令；gixy 不会检查这些文件。CVE-2026-93479 仍是基于版本的公告，并不证明存在可被利用的配置。
 - **直接引用文件名。** CVE-2026-15176 检查的是词法层面的变量引用和生效的具名日志格式；对任意的变量间接引用和请求时的控制流并未完整建模。
-- **不自动检测。** gixy 不会调用 `nginx -v`，你需要显式传入版本。
+- **目标身份。** 只有显式使用 `--nginx-version=auto` 才会检测本地二进制文件。否则请自行指定目标版本；仅凭配置无法确定二进制文件身份或供应商补丁。
 
 --8<-- "zh/snippets/nginx-extras-cta.md"

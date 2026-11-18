@@ -215,7 +215,7 @@ def local_cli(tmp_path, monkeypatch, capsys):
 
 
 @pytest.mark.parametrize(
-    "banner,override,quic,cve",
+    "banner,override,quic,october_cve",
     [
         ("nginx-mod by GetPageSpeed.com/1.30.6", None, False, False),
         ("nginx-mod by GetPageSpeed.com/1.30.5", None, True, True),
@@ -227,7 +227,7 @@ def local_cli(tmp_path, monkeypatch, capsys):
     ],
 )
 def test_default_config_auto_drives_real_cli_checks(
-    local_cli, banner, override, quic, cve
+    local_cli, banner, override, quic, october_cve
 ):
     arguments = ["--debug"] + (["--nginx-flavor=" + override] if override else [])
     code, stdout, stderr = local_cli.run(
@@ -237,10 +237,10 @@ def test_default_config_auto_drives_real_cli_checks(
     issues = json.loads(stdout)
     plugins = {issue["plugin"] for issue in issues}
     assert ("quic_bpf_reuseport" in plugins) is quic
-    assert ("nginx_cves" in plugins) is cve
+    reasons = [issue["reason"] for issue in issues if issue["plugin"] == "nginx_cves"]
+    assert any("CVE-2026-121810" in reason for reason in reasons)
+    assert any("CVE-2026-93479" in reason for reason in reasons) is october_cve
     assert "version_disclosure" in plugins
-    if cve:
-        assert any("CVE-2026-93479" in issue["reason"] for issue in issues)
     assert local_cli.calls.read_text().splitlines() == ["-V"]
     assert "Resolved NGINX version" in stderr
     if (

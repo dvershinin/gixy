@@ -38,6 +38,7 @@ class nginx_cves(Plugin):
         "version": "Installed nginx Open Source version (e.g. 1.29.8).",
     }
     supports_full_config = True
+    full_config_subsystems = ("http", "stream", "mail")
 
     # Per-directive audit() is unused — all logic runs in post_audit().
     directives = []
@@ -74,7 +75,12 @@ class nginx_cves(Plugin):
             return
 
         has_config_check = cve["config_check"] is not None
-        pattern_matches = list(cve["config_check"](root)) if has_config_check else []
+        check_args = (
+            (root, self._oss_version) if cve.get("check_uses_version") else (root,)
+        )
+        pattern_matches = (
+            list(cve["config_check"](*check_args)) if has_config_check else []
+        )
         # Gating: if a CVE has a config-pattern trigger, suppress when the
         # trigger is absent — the binary may still be vulnerable, but no
         # exploitable surface exists in this config. Pure binary-level

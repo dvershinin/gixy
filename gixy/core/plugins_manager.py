@@ -85,20 +85,12 @@ class PluginsManager:
 
     def post_audit(self, root):
         """Call post_audit on plugins that support full config analysis when full config is detected."""
-        if not self._is_full_config(root):
-            return
-
+        subsystems = {child.name for child in root.children if child.is_block}
         for plugin in self.plugins:
-            if plugin.supports_full_config:
+            if plugin.supports_full_config and subsystems.intersection(
+                plugin.full_config_subsystems
+            ):
                 plugin.post_audit(root)
-
-    def _is_full_config(self, root):
-        """Detect if this is a full nginx config by checking for http block."""
-        # Check if root has an http block child
-        for child in root.children:
-            if child.name == "http":
-                return True
-        return False
 
     def issues(self):
         result = []
