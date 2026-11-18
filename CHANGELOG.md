@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.63] - 2026-11-19
+
+### Added
+- `nginx_cves` checks all ten advisories addressed by NGINX 1.30.7 and 1.31.9 against the target version and configuration. The PROXY protocol v2 advisory applies only to mainline versions 1.31.4 through 1.31.8.
+
+### Fixed
+- Gixy now runs CVE checks on standalone mail and stream configurations and recognizes the stream directive `proxy_protocol v2`.
+- The frozen binary workflow now publishes successful platform builds when another platform runner is unavailable.
+
 ## [0.2.62] - 2026-11-14
 
 ### Added
