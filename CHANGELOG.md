@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.64] - 2026-11-23
+
+### Added
+- `nginx_cves` checks CVE-2026-132779 (excessive CPU usage in TLS 1.3 with `ssl_early_data`), fixed in NGINX 1.30.8 and 1.31.10. It reports servers whose effective `ssl_early_data` is `on` and that can negotiate TLS 1.3; the mitigation is `ssl_early_data off;`.
+
 ## [0.2.63] - 2026-11-19
 
 ### Added
