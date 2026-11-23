@@ -1000,6 +1000,18 @@ def _advisory(cve_id):
 
 CVES = (
     {
+        "id": "CVE-2026-132779",
+        "nickname": "",
+        "summary": "Excessive CPU usage with TLS 1.3 early data.",
+        "severity": gixy.severity.MEDIUM,
+        "advisory": _advisory("CVE-2026-132779"),
+        "vulnerable_oss": (((1, 21, 4), (1, 31, 9)),),
+        "fixed_oss": ("1.30.8", "1.31.10"),
+        "fixed_plus": ("37.0.9.1", "37.3.1.1"),  # NOSONAR - Plus version
+        "config_check": CHECKERS["CVE-2026-132779"],
+        "check_uses_version": True,
+    },
+    {
         "id": "CVE-2026-123634",
         "nickname": "",
         "summary": "Use-after-free during resolver response processing.",

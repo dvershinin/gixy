@@ -28,7 +28,7 @@ gixy --nginx-version=1.31.6 /etc/nginx/nginx.conf
 
 ## 当前数据库
 
-截至 2026 年 11 月，数据库收录了 [NGINX 开源版官方安全公告页面](https://nginx.org/en/security_advisories.html)上 77 个 CVE 编号中的 73 个，其中包括对已修复的稳定分支版本的更正。有四项被有意排除：仅影响 Windows 的 CVE-2011-4963、CVE-2010-2266 和 CVE-2010-2263，以及 CVE-2009-4487（日志转义问题，严重级别为 none，影响所有版本，无已修复的发布版本）。这些排除项并不意味着已完整覆盖所有与 NGINX 相关的产品。
+截至 2026 年 11 月，数据库收录了 [NGINX 开源版官方安全公告页面](https://nginx.org/en/security_advisories.html)上 78 个 CVE 编号中的 74 个，其中包括对已修复的稳定分支版本的更正。有四项被有意排除：仅影响 Windows 的 CVE-2011-4963、CVE-2010-2266 和 CVE-2010-2263，以及 CVE-2009-4487（日志转义问题，严重级别为 none，影响所有版本，无已修复的发布版本）。这些排除项并不意味着已完整覆盖所有与 NGINX 相关的产品。
 
 2026 年 11 月的更新新增十个 CVE。配置前提依据各项
 [F5 CNA 记录](https://github.com/CVEProject/cvelistV5/tree/main/cves/2026)，
@@ -46,10 +46,12 @@ gixy --nginx-version=1.31.6 /etc/nginx/nginx.conf
 | [CVE-2026-125283](https://www.cve.org/CVERecord?id=CVE-2026-125283) | 生效的 `alias` 和 `try_files` 使用正则 `map` 变量及捕获组。具体捕获组合依赖请求，仍是运行时前提。 |
 | [CVE-2026-120967](https://www.cve.org/CVERecord?id=CVE-2026-120967) | 非默认的 TLS stream 虚拟服务器，且生效 `ssl_verify_client on`。 |
 | [CVE-2026-123640](https://www.cve.org/CVERecord?id=CVE-2026-123640) | stream 中生效 `ssl_preread on`。 |
+| [CVE-2026-132779](https://www.cve.org/CVERecord?id=CVE-2026-132779) | 启用 TLS 1.3 的 HTTP server（`listen ... ssl` 且生效的 `ssl_protocols` 包含 `TLSv1.3`），并且生效 `ssl_early_data on`。缓解措施：`ssl_early_data off;`。 |
 
 其中九项已在开源版 `1.30.7` 和 `1.31.9` 中修复。
 CVE-2026-120993 仅影响 `1.31.4`–`1.31.8`，在 `1.31.9` 中修复；
 稳定分支不受影响。
+CVE-2026-132779（中危，CVSS 3.1 5.3）影响 `1.21.4`–`1.31.9`，已在 `1.30.8` 和 `1.31.10` 中修复（NGINX Plus `R37.0.9.1`、`R37.3.1.1`）。
 
 HTTP、mail 和 stream 的设置分别限定在各自的协议上下文中。Stream 检查
 继承外层 `stream` 块的设置并应用 server 覆盖，不合并同级服务器。

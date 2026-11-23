@@ -57,7 +57,7 @@ a version we don't know.
 
 ## Current database
 
-As of November 2026, the database contains 73 of the 77 CVE IDs on the
+As of November 2026, the database contains 74 of the 78 CVE IDs on the
 [official NGINX Open Source security advisory page](https://nginx.org/en/security_advisories.html),
 including fixed stable-branch version corrections. Four entries are intentionally
 excluded: Windows-only CVE-2011-4963, CVE-2010-2266 and CVE-2010-2263, and
@@ -80,10 +80,12 @@ OSS affected ranges follow the official advisory page.
 | [CVE-2026-125283](https://www.cve.org/CVERecord?id=CVE-2026-125283) | Effective `alias` and `try_files` using a regex `map` variable and captures. Exact request-dependent capture combinations remain a runtime prerequisite. |
 | [CVE-2026-120967](https://www.cve.org/CVERecord?id=CVE-2026-120967) | A non-default TLS stream virtual server with effective `ssl_verify_client on`. |
 | [CVE-2026-123640](https://www.cve.org/CVERecord?id=CVE-2026-123640) | Effective stream `ssl_preread on`. |
+| [CVE-2026-132779](https://www.cve.org/CVERecord?id=CVE-2026-132779) | HTTP TLS 1.3 server (`listen ... ssl` with effective `ssl_protocols` including `TLSv1.3`) with effective `ssl_early_data on`. Mitigation: `ssl_early_data off;`. |
 
 Nine entries are fixed in OSS `1.30.7` and `1.31.9`.
 CVE-2026-120993 affects only `1.31.4`–`1.31.8` and is fixed in `1.31.9`;
 it has no affected stable branch.
+CVE-2026-132779 (medium, CVSS 3.1 5.3) affects `1.21.4`–`1.31.9` and is fixed in `1.30.8` and `1.31.10` (NGINX Plus `R37.0.9.1`, `R37.3.1.1`).
 
 HTTP, mail and stream settings stay in their own protocol contexts. Stream
 checks inherit settings from the enclosing `stream` block and apply server

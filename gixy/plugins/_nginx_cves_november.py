@@ -73,7 +73,7 @@ def check_http2_proxy(root):
                     yield proxy, protocol
 
 
-def check_tls13_body(root, version):
+def _tls13_listeners(root, version):
     """Yield HTTP TLS listeners whose effective protocols include TLS 1.3.
 
     Args:
@@ -81,7 +81,8 @@ def check_tls13_body(root, version):
         version: Parsed OSS version tuple, or None for an unknown Plus base.
 
     Yields:
-        Pairs of listener and effective protocol directive, or listener twice.
+        Triples of server, listener and effective protocol directive (None when
+        the version default applies).
     """
     for http in root.find("http", flat=False):
         listeners, defaults = _listener_defaults(http)
@@ -94,7 +95,34 @@ def check_tls13_body(root, version):
                     continue
             elif version is not None and version < (1, 23, 4):
                 continue
-            yield listener, protocols if protocols is not None else listener
+            yield server, listener, protocols
+
+
+def check_tls13_body(root, version):
+    """Yield HTTP TLS listeners whose effective protocols include TLS 1.3.
+
+    Yields:
+        Pairs of listener and effective protocol directive, or listener twice.
+    """
+    for _, listener, protocols in _tls13_listeners(root, version):
+        yield listener, protocols if protocols is not None else listener
+
+
+def check_early_data(root, version):
+    """Yield HTTP TLS 1.3 servers with effective ``ssl_early_data on``.
+
+    Yields:
+        Pairs of the effective ``ssl_early_data`` directive and the listener.
+    """
+    seen = set()
+    for server, listener, _ in _tls13_listeners(root, version):
+        early_data = _effective(server, "ssl_early_data")
+        if early_data is None or early_data.args != ["on"]:
+            continue
+        if id(server) in seen:
+            continue
+        seen.add(id(server))
+        yield early_data, listener
 
 
 def check_mail_proxy(root):
@@ -276,6 +304,7 @@ CHECKERS = {
     "CVE-2026-121810": check_http3,
     "CVE-2026-123633": check_http2_proxy,
     "CVE-2026-118899": check_tls13_body,
+    "CVE-2026-132779": check_early_data,
     "CVE-2026-113425": check_mail_proxy,
     "CVE-2026-120993": check_stream_proxy_v2,
     "CVE-2026-125283": check_alias_try_files_map,

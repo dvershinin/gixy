@@ -14,8 +14,11 @@ alwaysApply: false
   `default_server` and otherwise the first server on that listener. Respect
   nearer overrides, explicit `off`, and version-dependent TLS defaults.
 - November 2026 adds ten F5 CNA prerequisites, bringing coverage to 73 of 77
-  official CVE IDs. Nine fixes are 1.30.7/1.31.9; CVE-2026-120993 affects only
+  official CVE IDs (74 of 78 with CVE-2026-132779). Nine fixes are 1.30.7/1.31.9; CVE-2026-120993 affects only
   mainline 1.31.4-1.31.8 and is fixed in 1.31.9. Keep the four exclusions.
+- CVE-2026-132779 (23 Nov 2026) brings coverage to 74 of 78 official IDs; fixed
+  1.30.8/1.31.10. Prerequisite: effective `ssl_early_data on` on an HTTP TLS 1.3
+  server (shares `_tls13_listeners` with CVE-2026-118899); mitigation `off`.
 - Keep resolver subrequest checks, regex-map/try_files captures and dynamic
   certificates lexical and bounded. Never claim request-time hostname equality,
   connection exhaustion or exploitability from static prerequisite matches.
